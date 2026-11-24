@@ -74,7 +74,7 @@ export function MobileDrawer({
             }}
             className="w-full px-6 py-4 text-left text-[16px] font-medium text-[#171717] hover:bg-neutral-50 flex items-center gap-3.5"
           >
-            <Home className="w-5 h-5 text-[#12a800]" />
+            <Home className="w-5 h-5 text-[#b87e06]" />
             <span>Home</span>
           </button>
 

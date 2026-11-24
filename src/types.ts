@@ -29,7 +29,13 @@ export interface CartItem {
   quantity: number;
 }
 
-export type PaymentMethod = 'cod' | 'bkash' | 'nagad';
+export interface CartProfile {
+  name: string;
+  phone: string;
+  address: string;
+}
+
+export type PaymentMethod = 'cod' | 'bkash' | 'nagad' | 'rocket' | 'card';
 
 export interface OrderRecord {
   id: string;
@@ -39,6 +45,7 @@ export interface OrderRecord {
   address: string;
   zone: 'dhaka' | 'outside';
   paymentMethod: PaymentMethod;
+  paymentDetails?: string;
   items: {
     productId: string;
     name: string;

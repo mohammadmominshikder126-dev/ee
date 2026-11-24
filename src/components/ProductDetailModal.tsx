@@ -72,7 +72,7 @@ export function ProductDetailModal({
             </h2>
 
             <div className="mt-2 flex items-baseline gap-2.5 font-mono-num">
-              <span className="text-2xl font-extrabold text-[#12a800]">
+              <span className="text-2xl font-extrabold text-[#b87e06]">
                 ৳{product.price.toLocaleString('en-US')}
               </span>
               <span className="text-sm text-neutral-400 line-through">
@@ -85,7 +85,7 @@ export function ProductDetailModal({
             <ul className="mt-4 space-y-2 text-xs sm:text-[13px] text-neutral-700">
               {product.specs.map((spec) => (
                 <li key={spec} className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-[#12a800] shrink-0 mt-0.5" />
+                  <Check className="w-4 h-4 text-[#b87e06] shrink-0 mt-0.5" />
                   <span>{spec}</span>
                 </li>
               ))}
@@ -93,11 +93,11 @@ export function ProductDetailModal({
 
             <div className="mt-4 pt-4 border-t border-neutral-100 flex items-center gap-4 text-xs text-neutral-600">
               <span className="flex items-center gap-1.5">
-                <Truck className="w-4 h-4 text-[#12a800]" />
+                <Truck className="w-4 h-4 text-[#b87e06]" />
                 Cash on Delivery
               </span>
               <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-[#12a800]" />
+                <ShieldCheck className="w-4 h-4 text-[#b87e06]" />
                 Left {product.left} in stock
               </span>
             </div>
@@ -143,7 +143,7 @@ export function ProductDetailModal({
                   onOrderNow(product, qty);
                   onClose();
                 }}
-                className="flex-1 min-h-[46px] rounded-xl bg-[#12a800] hover:bg-[#0f9200] text-white font-bold text-sm tracking-wide transition-colors"
+                className="flex-1 min-h-[46px] rounded-xl bg-gradient-to-r from-[#e2ae32] to-[#c98e0b] hover:from-[#ecc04c] hover:to-[#d99b12] text-[#141518] font-extrabold text-sm tracking-wide transition-colors cursor-pointer"
               >
                 ORDER NOW · ৳{(product.price * qty).toLocaleString('en-US')}
               </button>

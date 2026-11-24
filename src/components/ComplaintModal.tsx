@@ -64,7 +64,7 @@ export function ComplaintModal({ open, onClose }: ComplaintModalProps) {
               Report Received ({ticketId})
             </h3>
             <p className="text-sm text-neutral-600">
-              Our E-shop care team will call you on <span className="font-mono-num">{phone}</span>{' '}
+              Our Apon jon e-shop care team will call you on <span className="font-mono-num">{phone}</span>{' '}
               within 2 business hours.
             </p>
             <button

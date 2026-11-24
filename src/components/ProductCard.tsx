@@ -25,16 +25,18 @@ export function ProductCard({
   };
 
   return (
-    <article className="bg-white rounded-[22px] overflow-hidden shadow-[0_4px_18px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-150 flex flex-col relative">
-      <span className="absolute top-3 left-3 z-10 bg-[#171717] text-white rounded-full px-3 py-1.5 text-xs font-bold flex items-center gap-1 shadow-sm">
-        {product.isFlashBadge && <Zap className="w-3 h-3 fill-white text-white" aria-hidden="true" />}
+    <article className="bg-white rounded-[22px] overflow-hidden border border-[#ebe6da] shadow-[0_4px_18px_rgba(18,19,22,0.05)] hover:shadow-[0_10px_28px_rgba(18,19,22,0.09)] hover:-translate-y-0.5 transition-all duration-150 flex flex-col relative">
+      <span className="absolute top-3 left-3 z-10 bg-[#141518] text-white rounded-full px-3 py-1.5 text-xs font-bold flex items-center gap-1 shadow-sm border border-[#c98e0b]/40">
+        {product.isFlashBadge && (
+          <Zap className="w-3 h-3 fill-[#f0be4d] text-[#f0be4d]" aria-hidden="true" />
+        )}
         <span>{product.discountLabel}</span>
       </span>
 
       <button
         type="button"
         onClick={() => onSelectProduct(product)}
-        className="w-full aspect-[4/3] bg-[#f7f7f9] overflow-hidden block text-left focus-visible:outline-2 focus-visible:outline-[#12a800]"
+        className="w-full aspect-[4/3] bg-[#faf8f4] overflow-hidden block text-left focus-visible:outline-2 focus-visible:outline-[#c98e0b]"
       >
         {!imgError ? (
           <img
@@ -61,21 +63,21 @@ export function ProductCard({
         <button
           type="button"
           onClick={() => onSelectProduct(product)}
-          className="text-left focus-visible:outline-2 focus-visible:outline-[#12a800] rounded"
+          className="text-left focus-visible:outline-2 focus-visible:outline-[#c98e0b] rounded"
         >
-          <h3 className="text-[15px] sm:text-base font-semibold text-[#171717] leading-snug line-clamp-2 min-h-[42px] hover:text-[#12a800] transition-colors">
+          <h3 className="text-[15px] sm:text-base font-semibold text-[#141518] leading-snug line-clamp-2 min-h-[42px] hover:text-[#b87e06] transition-colors">
             {product.name}
           </h3>
         </button>
 
         <div className="mt-1.5 text-[11px] font-medium text-neutral-500 font-mono-num flex items-center gap-1.5">
-          <span className="text-[#12a800] font-semibold">Sold {product.sold}</span>
+          <span className="text-[#b87e06] font-semibold">Sold {product.sold}</span>
           <span aria-hidden="true">·</span>
           <span>Left {product.left}</span>
         </div>
 
         <div className="mt-2.5 flex items-baseline gap-2 font-mono-num">
-          <span className="text-[17px] sm:text-lg font-bold text-[#171717]">
+          <span className="text-[17px] sm:text-lg font-bold text-[#141518]">
             ৳{product.price.toLocaleString('en-US')}
           </span>
           <span className="text-[13px] text-neutral-400 line-through">
@@ -87,7 +89,7 @@ export function ProductCard({
           <button
             type="button"
             onClick={() => onOrderNow(product)}
-            className="flex-1 min-h-[44px] bg-[#171717] hover:bg-[#12a800] text-white rounded-[10px] px-3 py-2.5 text-xs sm:text-[13px] font-bold tracking-wide transition-colors cursor-pointer whitespace-nowrap"
+            className="flex-1 min-h-[44px] bg-[#141518] hover:bg-[#b87e06] text-white rounded-[10px] px-3 py-2.5 text-xs sm:text-[13px] font-bold tracking-wide transition-colors cursor-pointer whitespace-nowrap"
           >
             ORDER NOW
           </button>
@@ -98,8 +100,8 @@ export function ProductCard({
             aria-label={`Add ${product.name} to cart`}
             className={`w-11 h-11 rounded-[10px] border-[1.5px] flex items-center justify-center transition-colors shrink-0 cursor-pointer ${
               justAdded
-                ? 'bg-[#12a800] border-[#12a800] text-white'
-                : 'bg-white border-[#171717] text-[#171717] hover:bg-neutral-100'
+                ? 'bg-[#c98e0b] border-[#c98e0b] text-white'
+                : 'bg-white border-[#141518] text-[#141518] hover:bg-[#faf6eb]'
             }`}
           >
             {justAdded ? <Check className="w-5 h-5" /> : <ShoppingBasket className="w-5 h-5" />}

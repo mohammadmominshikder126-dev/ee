@@ -157,7 +157,7 @@ export function TrackOrderModal({
             )
           ) : (
             <p className="text-xs text-neutral-500">
-              Enter your E-shop Order ID above to check live dispatch status.
+              Enter your Apon jon e-shop Order ID above to check live dispatch status.
             </p>
           )}
         </div>

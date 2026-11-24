@@ -39,7 +39,7 @@ export function LoginView({
     }
     setStatusMessage('');
     onLogin({
-      name: isRegister ? name.trim() : identifier.trim().split('@')[0] || 'E-shop Customer',
+      name: isRegister ? name.trim() : identifier.trim().split('@')[0] || 'Apon jon e-shop Customer',
       identifier: identifier.trim(),
       provider: 'credentials',
     });
@@ -50,7 +50,7 @@ export function LoginView({
       <section className="max-w-xl mx-auto bg-white rounded-3xl p-6 sm:p-8 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
         <div className="flex items-center justify-between gap-4 pb-5 border-b border-neutral-100">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#12a800]/10 text-[#12a800] flex items-center justify-center font-display font-bold text-lg">
+            <div className="w-12 h-12 rounded-2xl bg-[#c98e0b]/15 text-[#b87e06] flex items-center justify-center font-display font-bold text-lg">
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -101,7 +101,7 @@ export function LoginView({
                       {order.items.length} item(s) · {order.status}
                     </div>
                   </div>
-                  <div className="font-mono-num text-sm font-bold text-[#12a800]">
+                  <div className="font-mono-num text-sm font-bold text-[#b87e06]">
                     ৳{order.total.toLocaleString('en-US')}
                   </div>
                 </button>
@@ -212,7 +212,7 @@ export function LoginView({
 
         <button
           type="submit"
-          className="w-full min-h-[48px] rounded-xl bg-[#171717] hover:bg-[#12a800] text-white font-bold text-sm transition-colors cursor-pointer"
+          className="w-full min-h-[48px] rounded-xl bg-[#141518] hover:bg-[#b87e06] text-white font-bold text-sm transition-colors cursor-pointer"
         >
           {isRegister ? 'Register' : 'Log In'}
         </button>
@@ -230,7 +230,7 @@ export function LoginView({
           onClick={() =>
             onLogin({
               name: 'Google Shopper',
-              identifier: 'google.account@e-shop.com',
+              identifier: 'google.account@aponjon-eshop.com',
               provider: 'google',
             })
           }
@@ -244,7 +244,7 @@ export function LoginView({
           onClick={() =>
             onLogin({
               name: 'Facebook Shopper',
-              identifier: 'fb.customer@e-shop.com',
+              identifier: 'fb.customer@aponjon-eshop.com',
               provider: 'facebook',
             })
           }

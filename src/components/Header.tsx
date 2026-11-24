@@ -39,15 +39,15 @@ export function Header({
   };
 
   return (
-    <header className="bg-white border-b border-neutral-200/80 shadow-[0_3px_14px_rgba(0,0,0,0.04)] md:sticky md:top-0 z-30">
+    <header className="bg-white border-b border-[#e8e3d6] shadow-[0_3px_14px_rgba(18,19,22,0.05)] md:sticky md:top-0 z-30">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3 pb-3">
-        <div className="flex items-center justify-between gap-4 sm:gap-8">
-          <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center justify-between gap-3 sm:gap-6">
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 min-w-0">
             <button
               type="button"
               onClick={onOpenMenu}
               aria-label="Open navigation menu"
-              className="w-11 h-11 rounded-[14px] bg-[#f1f1f1] hover:bg-neutral-200 text-[#171717] flex items-center justify-center transition-colors lg:hidden"
+              className="w-11 h-11 rounded-[14px] bg-[#f4f1ea] hover:bg-[#eae4d6] text-[#141518] flex items-center justify-center transition-colors lg:hidden shrink-0"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -55,14 +55,24 @@ export function Header({
             <button
               type="button"
               onClick={onNavigateHome}
-              className="text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#12a800] rounded-lg"
+              className="flex items-center gap-2.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c98e0b] rounded-xl min-w-0"
             >
-              <span className="font-display text-[28px] sm:text-[34px] font-extrabold tracking-[-0.04em] leading-none block whitespace-nowrap">
-                <span className="text-[#12a800]">E-</span>
-                <span className="text-[#171717]">shop</span>
+              <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-[#d49b1a] bg-[#121316] shrink-0 shadow-xs flex items-center justify-center">
+                <img
+                  src="/assets/aistudio/Screenshot_20261124-231551_28c4b6f8.jpg"
+                  alt="Apon jon e-shop logo"
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover object-center scale-[1.08]"
+                />
               </span>
-              <span className="block text-[8px] sm:text-[9px] tracking-[0.26em] text-neutral-500 font-semibold mt-0.5 whitespace-nowrap">
-                — GADGETS FOR A SMARTER YOU —
+              <span className="min-w-0">
+                <span className="font-display text-[20px] sm:text-[28px] font-extrabold tracking-[-0.03em] leading-none block whitespace-nowrap">
+                  <span className="text-[#b87e06]">Apon jon </span>
+                  <span className="text-[#141518]">e-shop</span>
+                </span>
+                <span className="block text-[8px] sm:text-[9px] tracking-[0.22em] text-neutral-500 font-semibold mt-1 whitespace-nowrap">
+                  YOUR TRUST • OUR PROMISE
+                </span>
               </span>
             </button>
           </div>
@@ -80,8 +90,8 @@ export function Header({
                   onClick={() => onSelectCategory(cat)}
                   className={`whitespace-nowrap shrink-0 py-1.5 border-b-2 transition-colors ${
                     active
-                      ? 'border-[#12a800] text-[#171717] font-semibold'
-                      : 'border-transparent hover:text-[#171717]'
+                      ? 'border-[#c98e0b] text-[#141518] font-semibold'
+                      : 'border-transparent hover:text-[#141518]'
                   }`}
                 >
                   {cat === 'All' ? 'All Gadgets' : cat}
@@ -91,7 +101,7 @@ export function Header({
             <button
               type="button"
               onClick={onOpenTrackOrder}
-              className="whitespace-nowrap shrink-0 py-1.5 border-b-2 border-transparent hover:text-[#171717] transition-colors"
+              className="whitespace-nowrap shrink-0 py-1.5 border-b-2 border-transparent hover:text-[#141518] transition-colors"
             >
               Track Order
             </button>
@@ -101,9 +111,9 @@ export function Header({
             <button
               type="button"
               onClick={onOpenLogin}
-              className="hidden sm:flex items-center gap-2 h-11 px-3.5 rounded-xl border border-neutral-200 hover:border-neutral-300 text-sm font-semibold text-[#171717] transition-colors whitespace-nowrap shrink-0"
+              className="hidden sm:flex items-center gap-2 h-11 px-3.5 rounded-xl border border-[#e3ddd0] hover:border-[#c98e0b] text-sm font-semibold text-[#141518] transition-colors whitespace-nowrap shrink-0"
             >
-              <User className="w-4 h-4 text-neutral-600" />
+              <User className="w-4 h-4 text-[#b87e06]" />
               <span>{userName ? userName.split(' ')[0] : 'Log In'}</span>
             </button>
 
@@ -111,10 +121,10 @@ export function Header({
               type="button"
               onClick={onOpenCart}
               aria-label={`Shopping cart with ${cartCount} items`}
-              className="w-12 h-12 rounded-full bg-[#171717] hover:bg-neutral-800 text-white flex items-center justify-center relative transition-colors shrink-0"
+              className="w-12 h-12 rounded-full bg-[#141518] hover:bg-[#24262b] text-white flex items-center justify-center relative transition-colors shrink-0 shadow-sm"
             >
-              <ShoppingBasket className="w-5 h-5" />
-              <span className="font-mono-num absolute -right-1 -top-1 bg-white text-[#111] border-2 border-[#111] rounded-full text-[11px] font-bold w-6 h-6 flex items-center justify-center">
+              <ShoppingBasket className="w-5 h-5 text-[#f0be4d]" />
+              <span className="font-mono-num absolute -right-1 -top-1 bg-[#e0ab2b] text-[#141518] border-2 border-[#141518] rounded-full text-[11px] font-extrabold w-6 h-6 flex items-center justify-center">
                 {cartCount}
               </span>
             </button>
@@ -123,7 +133,7 @@ export function Header({
 
         <form
           onSubmit={handleSubmit}
-          className="mt-3 flex items-center border-2 border-[#222] rounded-[13px] p-1 bg-white h-12 focus-within:border-[#12a800] transition-colors"
+          className="mt-3 flex items-center border-2 border-[#1c1d21] rounded-[13px] p-1 bg-white h-12 focus-within:border-[#c98e0b] transition-colors"
         >
           <input
             type="search"
@@ -131,12 +141,12 @@ export function Header({
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search products..."
             aria-label="Search products"
-            className="flex-1 min-w-0 px-3 text-[15px] text-[#171717] placeholder:text-neutral-400 outline-none bg-transparent"
+            className="flex-1 min-w-0 px-3 text-[15px] text-[#141518] placeholder:text-neutral-400 outline-none bg-transparent"
           />
           <button
             type="submit"
             aria-label="Submit product search"
-            className="w-10 h-9 rounded-[9px] bg-[#171717] hover:bg-[#12a800] text-white flex items-center justify-center transition-colors shrink-0"
+            className="w-10 h-9 rounded-[9px] bg-[#141518] hover:bg-[#b87e06] text-white flex items-center justify-center transition-colors shrink-0"
           >
             <Search className="w-4 h-4" />
           </button>

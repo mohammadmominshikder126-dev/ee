@@ -32,21 +32,21 @@ export function FlashSaleBanner({ onViewAll }: FlashSaleBannerProps) {
   return (
     <section
       aria-label="Flash Sale"
-      className="rounded-3xl p-5 sm:p-7 text-white mb-6 shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
+      className="rounded-3xl p-5 sm:p-7 text-white mb-6 shadow-[0_14px_34px_rgba(18,19,22,0.16)] border border-[#c98e0b]/25"
       style={{
-        background: 'linear-gradient(115deg, #070707 58%, #024910 100%)',
+        background: 'linear-gradient(115deg, #111216 56%, #4b3407 100%)',
       }}
     >
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-[#2a2a2a] flex items-center justify-center shrink-0">
-            <Zap className="w-8 h-8 fill-white text-white" aria-hidden="true" />
+          <div className="w-16 h-16 rounded-2xl bg-[#c98e0b]/20 border border-[#e0ab2b]/40 flex items-center justify-center shrink-0">
+            <Zap className="w-8 h-8 fill-[#f0be4d] text-[#f0be4d]" aria-hidden="true" />
           </div>
           <div>
-            <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-wide leading-tight">
+            <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-wide leading-tight text-[#fffdf7]">
               FLASH SALE
             </h1>
-            <p className="text-neutral-200 text-[15px] sm:text-base mt-0.5">
+            <p className="text-[#e7dfc9] text-[15px] sm:text-base mt-0.5">
               Flash OFF — Shop fast!
             </p>
           </div>
@@ -54,11 +54,11 @@ export function FlashSaleBanner({ onViewAll }: FlashSaleBannerProps) {
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 lg:gap-6">
           <div>
-            <div className="text-sm font-semibold text-neutral-200 mb-2.5">Ends in</div>
+            <div className="text-sm font-semibold text-[#e7dfc9] mb-2.5">Ends in</div>
             <div className="flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
               {timeUnits.map((unit, idx) => (
                 <div key={unit.label} className="flex items-center gap-1.5 sm:gap-2">
-                  <div className="bg-white text-[#111] rounded-[13px] min-w-[60px] sm:min-w-[66px] px-2 py-2 text-center shadow-sm">
+                  <div className="bg-[#fffdf8] text-[#141518] rounded-[13px] min-w-[60px] sm:min-w-[66px] px-2 py-2 text-center shadow-sm">
                     <span className="font-mono-num block text-xl sm:text-[22px] font-bold leading-none">
                       {unit.value}
                     </span>
@@ -67,7 +67,7 @@ export function FlashSaleBanner({ onViewAll }: FlashSaleBannerProps) {
                     </small>
                   </div>
                   {idx < timeUnits.length - 1 && (
-                    <span className="text-xl font-bold text-neutral-300 select-none" aria-hidden="true">
+                    <span className="text-xl font-bold text-[#e0ab2b] select-none" aria-hidden="true">
                       :
                     </span>
                   )}
@@ -79,7 +79,7 @@ export function FlashSaleBanner({ onViewAll }: FlashSaleBannerProps) {
           <button
             type="button"
             onClick={onViewAll}
-            className="w-full sm:w-auto lg:min-w-[180px] rounded-[13px] bg-[#12a800] hover:bg-[#109400] active:scale-[0.99] text-white font-bold text-[17px] px-6 py-4 flex items-center justify-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0"
+            className="w-full sm:w-auto lg:min-w-[180px] rounded-[13px] bg-gradient-to-r from-[#ebc04e] to-[#c98e0b] hover:from-[#f4cc62] hover:to-[#d99b12] active:scale-[0.99] text-[#121316] font-extrabold text-[17px] px-6 py-4 flex items-center justify-center gap-2 transition-all cursor-pointer whitespace-nowrap shrink-0 shadow-md"
           >
             <span>View All</span>
             <ArrowRight className="w-5 h-5" />
