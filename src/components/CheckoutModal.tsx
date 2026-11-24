@@ -23,19 +23,19 @@ interface CheckoutModalProps {
 }
 
 const PAYMENT_OPTIONS: { id: PaymentMethod; label: string }[] = [
-  { id: 'cod', label: 'Cash on Delivery' },
-  { id: 'bkash', label: 'bKash' },
-  { id: 'nagad', label: 'Nagad' },
-  { id: 'rocket', label: 'Rocket' },
-  { id: 'card', label: 'Card' },
+  { id: 'cod', label: 'ক্যাশ অন ডেলিভারি' },
+  { id: 'bkash', label: 'বিকাশ' },
+  { id: 'nagad', label: 'নগদ' },
+  { id: 'rocket', label: 'রকেট' },
+  { id: 'card', label: 'কার্ড' },
 ];
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
-  cod: 'Cash on Delivery',
-  bkash: 'bKash',
-  nagad: 'Nagad',
-  rocket: 'Rocket',
-  card: 'Debit / Credit Card',
+  cod: 'ক্যাশ অন ডেলিভারি',
+  bkash: 'বিকাশ',
+  nagad: 'নগদ',
+  rocket: 'রকেট',
+  card: 'ডেবিট / ক্রেডিট কার্ড',
 };
 
 export function CheckoutModal({
@@ -81,15 +81,15 @@ export function CheckoutModal({
     e.preventDefault();
     const trimmedPhone = phone.trim();
     if (!customerName.trim()) {
-      setError('Please enter your full name.');
+      setError('দয়া করে আপনার পুরো নাম লিখুন।');
       return;
     }
     if (!/^01[3-9]\d{8}$/.test(trimmedPhone.replace(/\s+/g, ''))) {
-      setError('Please enter a valid 11-digit Bangladesh mobile number (01XXXXXXXXX).');
+      setError('সঠিক ১১ সংখ্যার মোবাইল নম্বর দিন (01XXXXXXXXX)।');
       return;
     }
     if (!address.trim() || address.trim().length < 6) {
-      setError('Please enter your complete delivery address.');
+      setError('দয়া করে আপনার সম্পূর্ণ ডেলিভারি ঠিকানা লিখুন।');
       return;
     }
 
@@ -98,29 +98,29 @@ export function CheckoutModal({
     if (isMobileWallet) {
       const cleanSender = walletSender.trim().replace(/\s+/g, '');
       if (!/^01[3-9]\d{8}$/.test(cleanSender)) {
-        setError(`Please enter your ${PAYMENT_LABELS[paymentMethod]} sender number (01XXXXXXXXX).`);
+        setError(`আপনার ${PAYMENT_LABELS[paymentMethod]} নম্বর দিন (01XXXXXXXXX)।`);
         return;
       }
       if (walletTrxId.trim().length < 4) {
-        setError(`Please enter your ${PAYMENT_LABELS[paymentMethod]} Transaction ID (TrxID).`);
+        setError(`আপনার ${PAYMENT_LABELS[paymentMethod]} ট্রানজেকশন আইডি (TrxID) দিন।`);
         return;
       }
       paymentDetails = `${cleanSender} · TrxID: ${walletTrxId.trim().toUpperCase()}`;
     } else if (paymentMethod === 'card') {
       const digitsOnly = cardNumber.replace(/\D/g, '');
       if (digitsOnly.length < 12) {
-        setError('Please enter a valid card number.');
+        setError('দয়া করে সঠিক কার্ড নম্বর লিখুন।');
         return;
       }
       if (!/^\d{2}\/\d{2}$/.test(cardExpiry.trim())) {
-        setError('Please enter card expiry in MM/YY format.');
+        setError('মেয়াদ MM/YY ফরম্যাটে লিখুন।');
         return;
       }
       if (!/^\d{3,4}$/.test(cardCvc.trim())) {
-        setError('Please enter a valid 3 or 4 digit CVC.');
+        setError('সঠিক ৩ বা ৪ সংখ্যার CVC দিন।');
         return;
       }
-      paymentDetails = `Card ending •••• ${digitsOnly.slice(-4)}`;
+      paymentDetails = `কার্ড শেষ ৪ সংখ্যা •••• ${digitsOnly.slice(-4)}`;
     }
 
     setError('');
@@ -144,7 +144,7 @@ export function CheckoutModal({
       subtotal,
       deliveryFee,
       total,
-      status: 'Order Placed',
+      status: 'অর্ডার গ্রহণ',
     };
 
     setConfirmedOrder(newOrder);
@@ -161,7 +161,7 @@ export function CheckoutModal({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Checkout"
+      aria-label="চেকআউট"
       className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center sm:p-4"
       onClick={handleResetAndClose}
     >
@@ -170,14 +170,14 @@ export function CheckoutModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 py-4 border-b border-neutral-100 flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold text-[#171717]">
-            {confirmedOrder ? 'Order Confirmed' : 'Quick Order Checkout'}
+          <h2 className="font-display text-lg font-bold text-[#141518]">
+            {confirmedOrder ? 'অর্ডার নিশ্চিত হয়েছে' : 'দ্রুত অর্ডার চেকআউট'}
           </h2>
           <button
             type="button"
             onClick={handleResetAndClose}
-            aria-label="Close checkout"
-            className="w-10 h-10 rounded-xl bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-[#171717]"
+            aria-label="চেকআউট বন্ধ করুন"
+            className="w-10 h-10 rounded-xl bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-[#141518]"
           >
             <X className="w-5 h-5" />
           </button>
@@ -189,46 +189,46 @@ export function CheckoutModal({
               <CheckCircle2 className="w-9 h-9" />
             </div>
             <div>
-              <h3 className="font-display text-xl font-bold text-[#171717]">
-                Thank you, {confirmedOrder.customerName}!
+              <h3 className="font-display text-xl font-bold text-[#141518]">
+                ধন্যবাদ, {confirmedOrder.customerName}!
               </h3>
               <p className="text-sm text-neutral-600 mt-1">
-                Order{' '}
-                <span className="font-mono-num font-bold text-[#171717]">
+                আপনার অর্ডার{' '}
+                <span className="font-mono-num font-bold text-[#141518]">
                   #{confirmedOrder.id}
                 </span>{' '}
-                is confirmed and being prepared for dispatch.
+                সফলভাবে গৃহীত হয়েছে এবং ডেলিভারির জন্য প্রস্তুত হচ্ছে।
               </p>
             </div>
 
             <div className="bg-neutral-50 border border-neutral-200 rounded-2xl p-4 text-left text-sm space-y-2">
               <div className="flex justify-between gap-2">
-                <span className="text-neutral-500">Delivery To</span>
+                <span className="text-neutral-500">ঠিকানা</span>
                 <span className="font-medium text-right truncate max-w-[220px]">
                   {confirmedOrder.address}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-neutral-500">Payment</span>
+                <span className="text-neutral-500">পেমেন্ট মাধ্যম</span>
                 <span className="font-semibold">{PAYMENT_LABELS[confirmedOrder.paymentMethod]}</span>
               </div>
               {confirmedOrder.paymentDetails && (
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Reference</span>
-                  <span className="font-mono-num text-xs font-semibold text-[#171717]">
+                  <span className="text-neutral-500">রেফারেন্স</span>
+                  <span className="font-mono-num text-xs font-semibold text-[#141518]">
                     {confirmedOrder.paymentDetails}
                   </span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-neutral-500">Delivery Zone</span>
+                <span className="text-neutral-500">ডেলিভারি এলাকা</span>
                 <span className="font-semibold">
-                  {confirmedOrder.zone === 'dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'}
+                  {confirmedOrder.zone === 'dhaka' ? 'ঢাকার ভেতরে' : 'ঢাকার বাইরে'}
                 </span>
               </div>
               <div className="flex justify-between pt-2 border-t border-neutral-200">
-                <span className="font-semibold text-[#171717]">Total Payable</span>
-                <span className="font-mono-num font-bold text-base text-[#12a800]">
+                <span className="font-semibold text-[#141518]">মোট পরিশোধযোগ্য</span>
+                <span className="font-mono-num font-bold text-base text-[#b87e06]">
                   ৳{confirmedOrder.total.toLocaleString('en-US')}
                 </span>
               </div>
@@ -242,16 +242,16 @@ export function CheckoutModal({
                   handleResetAndClose();
                   onTrackOrder(id);
                 }}
-                className="flex-1 min-h-[46px] rounded-xl bg-[#171717] text-white font-bold text-sm hover:bg-[#12a800] transition-colors"
+                className="flex-1 min-h-[46px] rounded-xl bg-[#141518] text-white font-bold text-sm hover:bg-[#b87e06] transition-colors"
               >
-                Track Order #{confirmedOrder.id}
+                অর্ডার ট্র্যাক #{confirmedOrder.id}
               </button>
               <button
                 type="button"
                 onClick={handleResetAndClose}
-                className="px-5 min-h-[46px] rounded-xl border border-neutral-200 font-semibold text-sm text-[#171717] hover:bg-neutral-50"
+                className="px-5 min-h-[46px] rounded-xl border border-neutral-200 font-semibold text-sm text-[#141518] hover:bg-neutral-50"
               >
-                Done
+                সম্পন্ন
               </button>
             </div>
           </div>
@@ -260,7 +260,7 @@ export function CheckoutModal({
             <div className="bg-neutral-50 rounded-2xl p-3.5 border border-neutral-200/80 space-y-2">
               {items.map(({ product, quantity }) => (
                 <div key={product.id} className="flex items-center justify-between text-sm">
-                  <span className="text-[#171717] font-medium truncate pr-2">
+                  <span className="text-[#141518] font-medium truncate pr-2">
                     {product.name} × {quantity}
                   </span>
                   <span className="font-mono-num font-semibold shrink-0">
@@ -269,12 +269,12 @@ export function CheckoutModal({
                 </div>
               ))}
               <div className="flex items-center justify-between text-xs text-neutral-500 pt-2 border-t border-neutral-200">
-                <span>Delivery charge</span>
+                <span>ডেলিভারি চার্জ</span>
                 <span className="font-mono-num font-semibold">৳{deliveryFee}</span>
               </div>
-              <div className="flex items-center justify-between text-sm font-bold text-[#171717]">
-                <span>Total</span>
-                <span className="font-mono-num text-base text-[#12a800]">
+              <div className="flex items-center justify-between text-sm font-bold text-[#141518]">
+                <span>সর্বমোট</span>
+                <span className="font-mono-num text-base text-[#b87e06]">
                   ৳{total.toLocaleString('en-US')}
                 </span>
               </div>
@@ -289,15 +289,15 @@ export function CheckoutModal({
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                  Full Name
+                  পূর্ণ নাম
                 </label>
-                <div className="flex items-center border border-neutral-300 rounded-xl px-3 h-11 focus-within:border-[#12a800]">
+                <div className="flex items-center border border-neutral-300 rounded-xl px-3 h-11 focus-within:border-[#c98e0b]">
                   <User className="w-4 h-4 text-neutral-400 mr-2.5 shrink-0" />
                   <input
                     type="text"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Your name"
+                    placeholder="আপনার নাম লিখুন"
                     className="w-full text-sm outline-none bg-transparent"
                   />
                 </div>
@@ -305,9 +305,9 @@ export function CheckoutModal({
 
               <div>
                 <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                  Mobile Number
+                  মোবাইল নম্বর
                 </label>
-                <div className="flex items-center border border-neutral-300 rounded-xl px-3 h-11 focus-within:border-[#12a800]">
+                <div className="flex items-center border border-neutral-300 rounded-xl px-3 h-11 focus-within:border-[#c98e0b]">
                   <Phone className="w-4 h-4 text-neutral-400 mr-2.5 shrink-0" />
                   <input
                     type="tel"
@@ -321,15 +321,15 @@ export function CheckoutModal({
 
               <div>
                 <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                  Full Delivery Address
+                  সম্পূর্ণ ডেলিভারি ঠিকানা
                 </label>
-                <div className="flex items-start border border-neutral-300 rounded-xl px-3 py-2.5 focus-within:border-[#12a800]">
+                <div className="flex items-start border border-neutral-300 rounded-xl px-3 py-2.5 focus-within:border-[#c98e0b]">
                   <MapPin className="w-4 h-4 text-neutral-400 mr-2.5 mt-0.5 shrink-0" />
                   <textarea
                     rows={2}
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="House, Road, Area, District"
+                    placeholder="বাসা, রোড, এলাকা, জেলা"
                     className="w-full text-sm outline-none bg-transparent resize-none"
                   />
                 </div>
@@ -337,7 +337,7 @@ export function CheckoutModal({
 
               <div>
                 <span className="block text-xs font-semibold text-neutral-700 mb-1.5">
-                  Delivery Area
+                  ডেলিভারি এলাকা
                 </span>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -345,31 +345,31 @@ export function CheckoutModal({
                     onClick={() => setZone('dhaka')}
                     className={`min-h-[42px] rounded-xl border text-xs font-semibold px-3 flex items-center justify-center gap-1.5 transition-colors ${
                       zone === 'dhaka'
-                        ? 'border-[#12a800] bg-[#12a800]/10 text-[#12a800]'
+                        ? 'border-[#c98e0b] bg-[#c98e0b]/10 text-[#b87e06]'
                         : 'border-neutral-200 text-neutral-700 hover:bg-neutral-50'
                     }`}
                   >
                     <Truck className="w-3.5 h-3.5" />
-                    Inside Dhaka (৳60)
+                    ঢাকার ভেতরে (৳৬০)
                   </button>
                   <button
                     type="button"
                     onClick={() => setZone('outside')}
                     className={`min-h-[42px] rounded-xl border text-xs font-semibold px-3 flex items-center justify-center gap-1.5 transition-colors ${
                       zone === 'outside'
-                        ? 'border-[#12a800] bg-[#12a800]/10 text-[#12a800]'
+                        ? 'border-[#c98e0b] bg-[#c98e0b]/10 text-[#b87e06]'
                         : 'border-neutral-200 text-neutral-700 hover:bg-neutral-50'
                     }`}
                   >
                     <Truck className="w-3.5 h-3.5" />
-                    Outside Dhaka (৳120)
+                    ঢাকার বাইরে (৳১২০)
                   </button>
                 </div>
               </div>
 
               <div>
                 <span className="block text-xs font-semibold text-neutral-700 mb-1.5">
-                  Payment Method
+                  পেমেন্ট মাধ্যম নির্বাচন করুন
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {PAYMENT_OPTIONS.map((method) => (
@@ -382,7 +382,7 @@ export function CheckoutModal({
                       }}
                       className={`min-h-[42px] rounded-xl border text-xs font-semibold px-2.5 flex items-center justify-center gap-1.5 transition-colors ${
                         paymentMethod === method.id
-                          ? 'border-[#171717] bg-[#171717] text-white'
+                          ? 'border-[#141518] bg-[#141518] text-white'
                           : 'border-neutral-200 text-neutral-700 hover:bg-neutral-50'
                       }`}
                     >
@@ -395,11 +395,11 @@ export function CheckoutModal({
 
               {isMobileWallet && (
                 <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-3.5 space-y-2.5">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-[#171717]">
-                    <Smartphone className="w-4 h-4 text-[#12a800]" />
+                  <div className="flex items-center gap-2 text-xs font-semibold text-[#141518]">
+                    <Smartphone className="w-4 h-4 text-[#b87e06]" />
                     <span>
-                      Send ৳{total.toLocaleString('en-US')} via {PAYMENT_LABELS[paymentMethod]} (Send
-                      Money) &amp; enter details:
+                      {PAYMENT_LABELS[paymentMethod]} এর মাধ্যমে ৳{total.toLocaleString('en-US')} পাঠিয়ে
+                      তথ্য দিন:
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -407,15 +407,15 @@ export function CheckoutModal({
                       type="tel"
                       value={walletSender}
                       onChange={(e) => setWalletSender(e.target.value)}
-                      placeholder="Sender 01XXXXXXXXX"
-                      className="h-10 px-3 rounded-xl border border-neutral-300 bg-white text-xs sm:text-sm font-mono-num outline-none focus:border-[#12a800]"
+                      placeholder="প্রেরকের নম্বর (01XXXXXXXXX)"
+                      className="h-10 px-3 rounded-xl border border-neutral-300 bg-white text-xs sm:text-sm font-mono-num outline-none focus:border-[#c98e0b]"
                     />
                     <input
                       type="text"
                       value={walletTrxId}
                       onChange={(e) => setWalletTrxId(e.target.value)}
-                      placeholder="Transaction ID (TrxID)"
-                      className="h-10 px-3 rounded-xl border border-neutral-300 bg-white text-xs sm:text-sm font-mono-num uppercase outline-none focus:border-[#12a800]"
+                      placeholder="ট্রানজেকশন আইডি (TrxID)"
+                      className="h-10 px-3 rounded-xl border border-neutral-300 bg-white text-xs sm:text-sm font-mono-num uppercase outline-none focus:border-[#c98e0b]"
                     />
                   </div>
                 </div>
@@ -423,9 +423,9 @@ export function CheckoutModal({
 
               {paymentMethod === 'card' && (
                 <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-3.5 space-y-2.5">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-[#171717]">
-                    <CreditCard className="w-4 h-4 text-[#12a800]" />
-                    <span>Debit / Credit Card (Visa, Mastercard, NexusPay)</span>
+                  <div className="flex items-center gap-2 text-xs font-semibold text-[#141518]">
+                    <CreditCard className="w-4 h-4 text-[#b87e06]" />
+                    <span>ডেবিট / ক্রেডিট কার্ড (ভিসা, মাস্টারকার্ড, নেক্সাসপে)</span>
                   </div>
                   <input
                     type="text"
@@ -433,8 +433,8 @@ export function CheckoutModal({
                     maxLength={19}
                     value={cardNumber}
                     onChange={(e) => setCardNumber(e.target.value)}
-                    placeholder="Card Number (e.g. 4242 •••• •••• 4242)"
-                    className="w-full h-10 px-3 rounded-xl border border-neutral-300 bg-white text-xs sm:text-sm font-mono-num outline-none focus:border-[#12a800]"
+                    placeholder="কার্ড নম্বর (যেমন: 4242 •••• •••• 4242)"
+                    className="w-full h-10 px-3 rounded-xl border border-neutral-300 bg-white text-xs sm:text-sm font-mono-num outline-none focus:border-[#c98e0b]"
                   />
                   <div className="grid grid-cols-2 gap-2.5">
                     <input
@@ -443,7 +443,7 @@ export function CheckoutModal({
                       value={cardExpiry}
                       onChange={(e) => setCardExpiry(e.target.value)}
                       placeholder="MM/YY"
-                      className="h-10 px-3 rounded-xl border border-neutral-300 bg-white text-xs sm:text-sm font-mono-num outline-none focus:border-[#12a800]"
+                      className="h-10 px-3 rounded-xl border border-neutral-300 bg-white text-xs sm:text-sm font-mono-num outline-none focus:border-[#c98e0b]"
                     />
                     <input
                       type="password"
@@ -452,7 +452,7 @@ export function CheckoutModal({
                       value={cardCvc}
                       onChange={(e) => setCardCvc(e.target.value)}
                       placeholder="CVC"
-                      className="h-10 px-3 rounded-xl border border-neutral-300 bg-white text-xs sm:text-sm font-mono-num outline-none focus:border-[#12a800]"
+                      className="h-10 px-3 rounded-xl border border-neutral-300 bg-white text-xs sm:text-sm font-mono-num outline-none focus:border-[#c98e0b]"
                     />
                   </div>
                 </div>
@@ -464,7 +464,7 @@ export function CheckoutModal({
               className="w-full min-h-[48px] rounded-xl bg-gradient-to-r from-[#e2ae32] to-[#c98e0b] hover:from-[#ecc04c] hover:to-[#d99b12] text-[#141518] font-extrabold text-sm flex items-center justify-center gap-2 transition-colors shadow-sm cursor-pointer"
             >
               <ShieldCheck className="w-4 h-4" />
-              <span>Confirm Order · ৳{total.toLocaleString('en-US')}</span>
+              <span>অর্ডার নিশ্চিত করুন · ৳{total.toLocaleString('en-US')}</span>
             </button>
           </form>
         )}

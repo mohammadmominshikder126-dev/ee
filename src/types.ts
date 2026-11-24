@@ -1,17 +1,11 @@
-export type CategoryKey =
-  | 'All'
-  | 'Toys'
-  | 'Gadgets'
-  | 'Home Decor'
-  | 'Camera'
-  | 'Accessories';
+export type CategoryKey = 'সব' | 'লাইটিং' | 'গ্যাজেট' | 'সিরাম আইটেম';
 
 export type NavTab = 'home' | 'shop' | 'cart' | 'login';
 
 export interface Product {
   id: string;
   name: string;
-  category: Exclude<CategoryKey, 'All'>;
+  category: Exclude<CategoryKey, 'সব'>;
   price: number;
   oldPrice: number;
   discountLabel: string;
@@ -21,7 +15,6 @@ export interface Product {
   left: number;
   shortDesc: string;
   specs: string[];
-  badgeNote?: string;
 }
 
 export interface CartItem {
@@ -56,7 +49,7 @@ export interface OrderRecord {
   subtotal: number;
   deliveryFee: number;
   total: number;
-  status: 'Order Placed' | 'Confirmed' | 'Dispatched' | 'Delivered';
+  status: 'অর্ডার গ্রহণ' | 'নিশ্চিত হয়েছে' | 'পাঠানো হয়েছে' | 'ডেলিভারি সম্পন্ন';
 }
 
 export interface CustomerUser {
@@ -70,7 +63,6 @@ export interface VerifiedPurchase {
   buyer: string;
   productId: string;
   productName: string;
-  productSubtitle?: string;
   timeAgo: string;
   image: string;
 }

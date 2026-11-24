@@ -52,15 +52,15 @@ export function CartPageView({
     e.preventDefault();
     const cleanPhone = phone.trim().replace(/\s+/g, '');
     if (!name.trim()) {
-      setFormError('Please enter your name.');
+      setFormError('দয়া করে আপনার পুরো নাম লিখুন।');
       return;
     }
     if (!/^01[3-9]\d{8}$/.test(cleanPhone)) {
-      setFormError('Please enter a valid 11-digit mobile number (01XXXXXXXXX).');
+      setFormError('সঠিক ১১ সংখ্যার মোবাইল নম্বর দিন (01XXXXXXXXX)।');
       return;
     }
     if (!address.trim() || address.trim().length < 5) {
-      setFormError('Please enter your delivery address.');
+      setFormError('দয়া করে আপনার সম্পূর্ণ ডেলিভারি ঠিকানা লিখুন।');
       return;
     }
     setFormError('');
@@ -79,7 +79,7 @@ export function CartPageView({
           <div className="flex items-center gap-2.5">
             <ShoppingBag className="w-5 h-5 text-[#b87e06]" />
             <h2 className="font-display text-xl font-bold text-[#141518]">
-              Your Cart ({totalItems})
+              আপনার কার্ট ({totalItems})
             </h2>
           </div>
           <button
@@ -87,7 +87,7 @@ export function CartPageView({
             onClick={onContinueShopping}
             className="text-xs sm:text-sm font-semibold text-[#b87e06] hover:underline"
           >
-            Continue Shopping
+            আরও পণ্য দেখুন
           </button>
         </div>
 
@@ -100,7 +100,7 @@ export function CartPageView({
                 }`}
               />
               <h3 className="font-display text-sm font-bold text-[#141518]">
-                Cart Registration &amp; Setup
+                কার্ট রেজিস্ট্রেশন ও সেটআপ ফর্ম
               </h3>
             </div>
             {profile && !editingProfile && (
@@ -109,7 +109,7 @@ export function CartPageView({
                 onClick={() => setEditingProfile(true)}
                 className="text-xs font-semibold text-[#b87e06] hover:underline"
               >
-                Edit
+                পরিবর্তন করুন
               </button>
             )}
           </div>
@@ -120,7 +120,7 @@ export function CartPageView({
               <div className="font-mono-num text-neutral-600">{profile.phone}</div>
               <div className="text-neutral-600">{profile.address}</div>
               <div className="pt-1 text-xs font-semibold text-[#12a800]">
-                Cart setup complete — ready for checkout
+                কার্ট সেটআপ সম্পন্ন হয়েছে — এখন সহজেই চেকআউট করতে পারবেন
               </div>
             </div>
           ) : (
@@ -138,7 +138,7 @@ export function CartPageView({
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Your Full Name"
+                    placeholder="আপনার পুরো নাম"
                     className="w-full text-sm outline-none bg-transparent"
                   />
                 </div>
@@ -149,7 +149,7 @@ export function CartPageView({
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Mobile Number (01XXXXXXXXX)"
+                    placeholder="মোবাইল নম্বর (01XXXXXXXXX)"
                     className="w-full text-sm outline-none bg-transparent font-mono-num"
                   />
                 </div>
@@ -161,7 +161,7 @@ export function CartPageView({
                   rows={2}
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Delivery Address (House, Road, Area)"
+                  placeholder="ডেলিভারি ঠিকানা (বাসা, রোড, এলাকা, জেলা)"
                   className="w-full text-sm outline-none bg-transparent resize-none"
                 />
               </div>
@@ -170,7 +170,7 @@ export function CartPageView({
                 type="submit"
                 className="w-full min-h-[44px] rounded-xl bg-[#141518] hover:bg-[#b87e06] text-white font-bold text-sm transition-colors cursor-pointer"
               >
-                Save &amp; Setup Cart
+                সেভ ও কার্ট সেটআপ করুন
               </button>
             </form>
           )}
@@ -182,16 +182,16 @@ export function CartPageView({
               <div className="w-14 h-14 rounded-2xl bg-[#f4f1ea] flex items-center justify-center mb-3 text-[#b87e06]">
                 <ShoppingBag className="w-7 h-7" />
               </div>
-              <h3 className="font-display text-base font-bold text-[#141518]">Your cart is empty</h3>
+              <h3 className="font-display text-base font-bold text-[#141518]">আপনার কার্ট খালি</h3>
               <p className="text-xs sm:text-sm text-neutral-500 mt-1 max-w-xs">
-                Slide left or right to browse products and tap the cart icon to add items here.
+                ডান-বাম স্লাইড করে পণ্য দেখুন এবং কার্ট আইকনে চাপ দিয়ে এখানে যোগ করুন।
               </p>
               <button
                 type="button"
                 onClick={onContinueShopping}
                 className="mt-4 px-6 py-2.5 rounded-xl bg-[#141518] text-white text-xs sm:text-sm font-bold hover:bg-[#b87e06] transition-colors"
               >
-                Browse Gadgets
+                পণ্য দেখুন
               </button>
             </div>
           ) : (
@@ -215,7 +215,7 @@ export function CartPageView({
                       <button
                         type="button"
                         onClick={() => onRemoveItem(product.id)}
-                        aria-label={`Remove ${product.name}`}
+                        aria-label={`${product.name} সরিয়ে ফেলুন`}
                         className="text-neutral-400 hover:text-red-600 p-1 shrink-0"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -226,13 +226,13 @@ export function CartPageView({
                     </div>
                     <div className="mt-2.5 flex items-center justify-between">
                       <span className="text-xs text-neutral-500 font-mono-num">
-                        ৳{product.price.toLocaleString('en-US')} each
+                        প্রতি পিস ৳{product.price.toLocaleString('en-US')}
                       </span>
                       <div className="flex items-center border border-[#dfd8c5] bg-white rounded-lg overflow-hidden">
                         <button
                           type="button"
                           onClick={() => onUpdateQty(product.id, -1)}
-                          aria-label="Decrease quantity"
+                          aria-label="পরিমাণ কমান"
                           className="w-8 h-8 flex items-center justify-center hover:bg-neutral-100"
                         >
                           <Minus className="w-3.5 h-3.5" />
@@ -243,7 +243,7 @@ export function CartPageView({
                         <button
                           type="button"
                           onClick={() => onUpdateQty(product.id, 1)}
-                          aria-label="Increase quantity"
+                          aria-label="পরিমাণ বাড়ান"
                           className="w-8 h-8 flex items-center justify-center hover:bg-neutral-100"
                         >
                           <Plus className="w-3.5 h-3.5" />
@@ -256,20 +256,20 @@ export function CartPageView({
 
               <div className="pt-4 border-t border-[#e8e3d6] space-y-3">
                 <div className="flex items-center justify-between text-sm text-neutral-600">
-                  <span>Subtotal</span>
+                  <span>সর্বমোট (সাবটোটাল)</span>
                   <span className="font-mono-num font-bold text-lg text-[#141518]">
                     ৳{subtotal.toLocaleString('en-US')}
                   </span>
                 </div>
                 <p className="text-xs text-neutral-500">
-                  Delivery: ৳60 inside Dhaka · ৳120 outside Dhaka (COD / bKash / Nagad / Rocket / Card)
+                  ডেলিভারি চার্জ: ঢাকার ভেতরে ৳৬০ · ঢাকার বাইরে ৳১২০ (ক্যাশ অন ডেলিভারি / বিকাশ / নগদ / রকেট / কার্ড)
                 </p>
                 <button
                   type="button"
                   onClick={onCheckout}
                   className="w-full min-h-[48px] rounded-xl bg-gradient-to-r from-[#e2ae32] to-[#c98e0b] hover:from-[#ecc04c] hover:to-[#d99b12] text-[#141518] font-extrabold text-sm flex items-center justify-center gap-2 transition-colors shadow-sm cursor-pointer"
                 >
-                  <span>Proceed to Checkout</span>
+                  <span>চেকআউট করুন</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>

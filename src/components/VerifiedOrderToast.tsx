@@ -32,8 +32,8 @@ export function VerifiedOrderToast({
           className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover shrink-0 bg-neutral-100"
         />
         <div className="min-w-0">
-          <div className="text-xs sm:text-[13px] font-bold text-[#171717] truncate">
-            {purchase.buyer} just purchased
+          <div className="text-xs sm:text-[13px] font-bold text-[#141518] truncate">
+            {purchase.buyer} এইমাত্র কিনেছেন
           </div>
           <div className="text-[11px] sm:text-xs text-neutral-600 truncate mt-0.5">
             {purchase.productName}
@@ -43,7 +43,7 @@ export function VerifiedOrderToast({
             <span aria-hidden="true">·</span>
             <span className="inline-flex items-center gap-1 text-[#12a800] font-semibold">
               <ShieldCheck className="w-3 h-3" />
-              Verified Order
+              ভেরিফাইড অর্ডার
             </span>
           </div>
         </div>
@@ -52,7 +52,7 @@ export function VerifiedOrderToast({
       <button
         type="button"
         onClick={onDismiss}
-        aria-label="Dismiss purchase notification"
+        aria-label="নোটিফিকেশন বন্ধ করুন"
         className="absolute right-1.5 top-1.5 w-7 h-7 rounded-full hover:bg-neutral-100 text-neutral-400 hover:text-neutral-700 flex items-center justify-center"
       >
         <X className="w-3.5 h-3.5" />

@@ -33,10 +33,10 @@ const STORAGE_CART_PROFILE_KEY = 'aponjon_cart_profile_v1';
 
 const PAGE_ORDER: NavTab[] = ['home', 'shop', 'cart', 'login'];
 const PAGE_LABELS: Record<NavTab, string> = {
-  home: 'Home',
-  shop: 'Shop',
-  cart: 'Cart',
-  login: 'Login',
+  home: 'হোম',
+  shop: 'শপ',
+  cart: 'কার্ট',
+  login: 'লগইন',
 };
 
 function readStorage<T>(key: string, fallback: T): T {
@@ -52,7 +52,7 @@ export default function App() {
   const [noticeVisible, setNoticeVisible] = useState(true);
   const [activeTab, setActiveTab] = useState<NavTab>('home');
   const [slideDirection, setSlideDirection] = useState<1 | -1>(1);
-  const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('All');
+  const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('সব');
   const [searchQuery, setSearchQuery] = useState('');
 
   const [cart, setCart] = useState<CartItem[]>(() => readStorage(STORAGE_CART_KEY, []));
@@ -127,7 +127,7 @@ export default function App() {
   const filteredProducts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return PRODUCTS.filter((product) => {
-      const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
+      const matchesCategory = selectedCategory === 'সব' || product.category === selectedCategory;
       const matchesSearch =
         !q ||
         product.name.toLowerCase().includes(q) ||
@@ -253,7 +253,7 @@ export default function App() {
     !toastDismissed && activeTab !== 'login' ? VERIFIED_PURCHASES[toastIndex] : null;
 
   const renderProductGrid = () => (
-    <section id="products" aria-label="Product catalog">
+    <section id="products" aria-label="পণ্যের তালিকা">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div
           data-no-swipe="true"
@@ -272,35 +272,34 @@ export default function App() {
                     : 'bg-white text-neutral-600 hover:text-[#141518] border border-[#e6e0d2]'
                 }`}
               >
-                {cat === 'All' ? 'All Products' : cat}
+                {cat === 'সব' ? 'সব পণ্য' : cat}
               </button>
             );
           })}
         </div>
 
         <div className="text-xs font-medium text-neutral-500 font-mono-num shrink-0">
-          Showing {filteredProducts.length} gadget
-          {filteredProducts.length === 1 ? '' : 's'}
+          মোট {filteredProducts.length} টি পণ্য দেখানো হচ্ছে
         </div>
       </div>
 
       {filteredProducts.length === 0 ? (
         <div className="bg-white rounded-3xl p-10 text-center shadow-[0_4px_18px_rgba(0,0,0,0.04)]">
           <h2 className="font-display text-lg font-bold text-[#141518]">
-            No matching products found
+            কোনো পণ্য পাওয়া যায়নি
           </h2>
           <p className="text-sm text-neutral-500 mt-1">
-            Try clearing your search filter or browsing another gadget category.
+            সার্চ ফিল্টার পরিবর্তন করুন অথবা অন্য ক্যাটাগরি দেখুন।
           </p>
           <button
             type="button"
             onClick={() => {
               setSearchQuery('');
-              setSelectedCategory('All');
+              setSelectedCategory('সব');
             }}
             className="mt-4 px-5 py-2.5 rounded-xl bg-[#b87e06] text-white text-sm font-bold"
           >
-            Reset Filters
+            সব পণ্য দেখুন
           </button>
         </div>
       ) : (
@@ -336,7 +335,7 @@ export default function App() {
         onOpenMenu={() => setDrawerOpen(true)}
         onOpenCart={() => navigateToTab('cart')}
         onNavigateHome={() => {
-          setSelectedCategory('All');
+          setSelectedCategory('সব');
           navigateToTab('home');
         }}
         onSelectCategory={handleSelectCategory}
@@ -351,7 +350,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => slideRelative(-1)}
-            aria-label="Slide left to previous page"
+            aria-label="বাম দিকে স্লাইড করুন"
             className="w-9 h-9 rounded-xl bg-[#f6f5f1] hover:bg-[#eae4d6] text-[#141518] flex items-center justify-center transition-colors shrink-0 cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -372,9 +371,9 @@ export default function App() {
                   }`}
                 >
                   {tab === 'cart' && cartCount > 0
-                    ? `Cart (${cartCount})`
+                    ? `কার্ট (${cartCount})`
                     : tab === 'login' && user
-                      ? 'Account'
+                      ? 'অ্যাকাউন্ট'
                       : PAGE_LABELS[tab]}
                 </button>
               );
@@ -384,7 +383,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => slideRelative(1)}
-            aria-label="Slide right to next page"
+            aria-label="ডান দিকে স্লাইড করুন"
             className="w-9 h-9 rounded-xl bg-[#f6f5f1] hover:bg-[#eae4d6] text-[#141518] flex items-center justify-center transition-colors shrink-0 cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" />
@@ -445,7 +444,7 @@ export default function App() {
 
       <footer className="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-10 pb-4 text-center">
         <div className="inline-flex items-center justify-center bg-[#141518] text-[#f0be4d] rounded-full px-8 py-2.5 text-sm font-bold tracking-wide shadow-sm">
-          Apon jon e-shop
+          আপনজন ই-শপ
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs text-neutral-500">
           <button
@@ -453,7 +452,7 @@ export default function App() {
             onClick={() => handleOpenTrackOrder()}
             className="hover:text-[#141518]"
           >
-            Track Order
+            অর্ডার ট্র্যাক
           </button>
           <span aria-hidden="true">·</span>
           <button
@@ -461,7 +460,7 @@ export default function App() {
             onClick={() => setComplaintOpen(true)}
             className="hover:text-[#141518]"
           >
-            Complaint Desk
+            অভিযোগ কেন্দ্র
           </button>
           <span aria-hidden="true">·</span>
           <button
@@ -469,7 +468,7 @@ export default function App() {
             onClick={() => navigateToTab('login')}
             className="hover:text-[#141518]"
           >
-            Customer Account
+            কাস্টমার অ্যাকাউন্ট
           </button>
         </div>
       </footer>
@@ -486,7 +485,7 @@ export default function App() {
       <SupportChatWidget />
 
       <nav
-        aria-label="Mobile bottom navigation"
+        aria-label="মোবাইল ন্যাভিগেশন"
         className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-t border-[#e6e0d2] shadow-[0_-4px_18px_rgba(0,0,0,0.06)] grid grid-cols-4 items-center z-40"
       >
         <button
@@ -497,7 +496,7 @@ export default function App() {
           }`}
         >
           <Home className={`w-5 h-5 ${activeTab === 'home' ? 'fill-[#141518]' : ''}`} />
-          <span>Home</span>
+          <span>হোম</span>
         </button>
 
         <button
@@ -508,7 +507,7 @@ export default function App() {
           }`}
         >
           <Store className="w-5 h-5" />
-          <span>Shop</span>
+          <span>শপ</span>
         </button>
 
         <button
@@ -526,7 +525,7 @@ export default function App() {
               </span>
             )}
           </div>
-          <span>Cart</span>
+          <span>কার্ট</span>
         </button>
 
         <button
@@ -537,7 +536,7 @@ export default function App() {
           }`}
         >
           <User className="w-5 h-5" />
-          <span>{user ? 'Account' : 'Login'}</span>
+          <span>{user ? 'অ্যাকাউন্ট' : 'লগইন'}</span>
         </button>
       </nav>
 
@@ -545,7 +544,7 @@ export default function App() {
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         onNavigateHome={() => {
-          setSelectedCategory('All');
+          setSelectedCategory('সব');
           navigateToTab('home');
         }}
         onSelectCategory={handleSelectCategory}

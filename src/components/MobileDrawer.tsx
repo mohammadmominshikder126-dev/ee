@@ -1,13 +1,12 @@
 import {
-  Camera,
+  Droplets,
+  Facebook,
   Headphones,
   Home,
-  Lamp,
+  Lightbulb,
   MessageSquareWarning,
   Truck,
   User,
-  Watch,
-  Gamepad2,
   X,
 } from 'lucide-react';
 import { CategoryKey } from '../types';
@@ -22,6 +21,8 @@ interface MobileDrawerProps {
   onOpenAccount: () => void;
 }
 
+const OFFICIAL_FACEBOOK_URL = 'https://www.facebook.com/';
+
 export function MobileDrawer({
   open,
   onClose,
@@ -33,19 +34,17 @@ export function MobileDrawer({
 }: MobileDrawerProps) {
   if (!open) return null;
 
-  const categoryItems: { label: string; cat: CategoryKey; icon: typeof Camera }[] = [
-    { label: 'Camera', cat: 'Camera', icon: Camera },
-    { label: 'Gadgets', cat: 'Gadgets', icon: Headphones },
-    { label: 'Home Decor', cat: 'Home Decor', icon: Lamp },
-    { label: 'Accessories', cat: 'Accessories', icon: Watch },
-    { label: 'Toys', cat: 'Toys', icon: Gamepad2 },
+  const categoryItems: { label: string; cat: CategoryKey; icon: typeof Lightbulb }[] = [
+    { label: 'লাইটিং', cat: 'লাইটিং', icon: Lightbulb },
+    { label: 'গ্যাজেট', cat: 'গ্যাজেট', icon: Headphones },
+    { label: 'সিরাম আইটেম', cat: 'সিরাম আইটেম', icon: Droplets },
   ];
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Mobile menu"
+      aria-label="মোবাইল মেনু"
       className="fixed inset-0 z-50 bg-black/55 backdrop-blur-xs flex"
       onClick={onClose}
     >
@@ -53,13 +52,13 @@ export function MobileDrawer({
         className="w-[min(82%,340px)] bg-white h-full flex flex-col shadow-2xl overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-[#171717] text-white px-6 py-5 flex items-center justify-between">
-          <span className="font-display text-xl font-bold">Mobile Menu</span>
+        <div className="bg-[#141518] text-white px-6 py-5 flex items-center justify-between">
+          <span className="font-display text-xl font-bold text-[#f0be4d]">মেনু</span>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close mobile menu"
-            className="w-10 h-10 rounded-xl bg-neutral-700 hover:bg-neutral-600 text-white flex items-center justify-center"
+            aria-label="মেনু বন্ধ করুন"
+            className="w-10 h-10 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
@@ -72,10 +71,10 @@ export function MobileDrawer({
               onNavigateHome();
               onClose();
             }}
-            className="w-full px-6 py-4 text-left text-[16px] font-medium text-[#171717] hover:bg-neutral-50 flex items-center gap-3.5"
+            className="w-full px-6 py-4 text-left text-[16px] font-medium text-[#141518] hover:bg-[#faf8f3] flex items-center gap-3.5"
           >
             <Home className="w-5 h-5 text-[#b87e06]" />
-            <span>Home</span>
+            <span>হোম</span>
           </button>
 
           {categoryItems.map(({ label, cat, icon: Icon }) => (
@@ -86,12 +85,23 @@ export function MobileDrawer({
                 onSelectCategory(cat);
                 onClose();
               }}
-              className="w-full px-6 py-4 text-left text-[16px] font-medium text-[#171717] hover:bg-neutral-50 flex items-center gap-3.5"
+              className="w-full px-6 py-4 text-left text-[16px] font-medium text-[#141518] hover:bg-[#faf8f3] flex items-center gap-3.5"
             >
-              <Icon className="w-5 h-5 text-neutral-500" />
+              <Icon className="w-5 h-5 text-[#b87e06]" />
               <span>{label}</span>
             </button>
           ))}
+
+          <a
+            href={OFFICIAL_FACEBOOK_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={onClose}
+            className="w-full px-6 py-4 text-left text-[16px] font-medium text-[#141518] hover:bg-[#faf8f3] flex items-center gap-3.5"
+          >
+            <Facebook className="w-5 h-5 text-[#1877f2]" />
+            <span>অফিশিয়াল ফেসবুক পেজ</span>
+          </a>
 
           <button
             type="button"
@@ -99,10 +109,10 @@ export function MobileDrawer({
               onOpenTrackOrder();
               onClose();
             }}
-            className="w-full px-6 py-4 text-left text-[16px] font-medium text-[#171717] hover:bg-neutral-50 flex items-center gap-3.5"
+            className="w-full px-6 py-4 text-left text-[16px] font-medium text-[#141518] hover:bg-[#faf8f3] flex items-center gap-3.5"
           >
             <Truck className="w-5 h-5 text-neutral-500" />
-            <span>Track Order</span>
+            <span>অর্ডার ট্র্যাক</span>
           </button>
 
           <button
@@ -111,10 +121,10 @@ export function MobileDrawer({
               onOpenComplaint();
               onClose();
             }}
-            className="w-full px-6 py-4 text-left text-[16px] font-medium text-[#171717] hover:bg-neutral-50 flex items-center gap-3.5"
+            className="w-full px-6 py-4 text-left text-[16px] font-medium text-[#141518] hover:bg-[#faf8f3] flex items-center gap-3.5"
           >
             <MessageSquareWarning className="w-5 h-5 text-neutral-500" />
-            <span>Complaint</span>
+            <span>অভিযোগ / সাপোর্ট</span>
           </button>
 
           <button
@@ -123,10 +133,10 @@ export function MobileDrawer({
               onOpenAccount();
               onClose();
             }}
-            className="w-full px-6 py-4 text-left text-[16px] font-medium text-[#171717] hover:bg-neutral-50 flex items-center gap-3.5"
+            className="w-full px-6 py-4 text-left text-[16px] font-medium text-[#141518] hover:bg-[#faf8f3] flex items-center gap-3.5"
           >
             <User className="w-5 h-5 text-neutral-500" />
-            <span>My Account</span>
+            <span>আমার অ্যাকাউন্ট</span>
           </button>
         </nav>
       </aside>

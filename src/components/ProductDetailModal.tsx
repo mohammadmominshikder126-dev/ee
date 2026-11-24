@@ -33,22 +33,20 @@ export function ProductDetailModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100">
-          <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-            {product.category}
-          </span>
+          <span className="text-xs font-semibold text-neutral-500">{product.category}</span>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close product details"
-            className="w-10 h-10 rounded-xl bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-[#171717]"
+            aria-label="বিস্তারিত বন্ধ করুন"
+            className="w-10 h-10 rounded-xl bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-[#141518]"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="overflow-y-auto p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-[#f7f7f9] relative">
-            <span className="absolute top-3 left-3 bg-[#171717] text-white text-xs font-bold px-3 py-1 rounded-full">
+          <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-[#faf8f4] relative">
+            <span className="absolute top-3 left-3 bg-[#141518] text-white text-xs font-bold px-3 py-1 rounded-full">
               {product.discountLabel}
             </span>
             {!imgError ? (
@@ -67,7 +65,7 @@ export function ProductDetailModal({
           </div>
 
           <div className="flex flex-col">
-            <h2 id="pdp-title" className="font-display text-xl sm:text-2xl font-bold text-[#171717]">
+            <h2 id="pdp-title" className="font-display text-xl sm:text-2xl font-bold text-[#141518]">
               {product.name}
             </h2>
 
@@ -94,21 +92,21 @@ export function ProductDetailModal({
             <div className="mt-4 pt-4 border-t border-neutral-100 flex items-center gap-4 text-xs text-neutral-600">
               <span className="flex items-center gap-1.5">
                 <Truck className="w-4 h-4 text-[#b87e06]" />
-                Cash on Delivery
+                ক্যাশ অন ডেলিভারি
               </span>
               <span className="flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-[#b87e06]" />
-                Left {product.left} in stock
+                স্টকে আছে {product.left} টি
               </span>
             </div>
 
             <div className="mt-5 flex items-center justify-between gap-3">
-              <span className="text-sm font-semibold text-neutral-700">Quantity</span>
+              <span className="text-sm font-semibold text-neutral-700">পরিমাণ</span>
               <div className="flex items-center border border-neutral-200 rounded-xl overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  aria-label="Decrease quantity"
+                  aria-label="পরিমাণ কমান"
                   className="w-10 h-10 flex items-center justify-center hover:bg-neutral-100"
                 >
                   <Minus className="w-4 h-4" />
@@ -117,7 +115,7 @@ export function ProductDetailModal({
                 <button
                   type="button"
                   onClick={() => setQty((q) => Math.min(product.left, q + 1))}
-                  aria-label="Increase quantity"
+                  aria-label="পরিমাণ বাড়ান"
                   className="w-10 h-10 flex items-center justify-center hover:bg-neutral-100"
                 >
                   <Plus className="w-4 h-4" />
@@ -132,10 +130,10 @@ export function ProductDetailModal({
                   onAddToCart(product, qty);
                   onClose();
                 }}
-                className="min-h-[46px] px-4 rounded-xl border-2 border-[#171717] text-[#171717] hover:bg-neutral-100 font-bold text-sm flex items-center justify-center gap-2 shrink-0"
+                className="min-h-[46px] px-4 rounded-xl border-2 border-[#141518] text-[#141518] hover:bg-neutral-100 font-bold text-sm flex items-center justify-center gap-2 shrink-0"
               >
                 <ShoppingBasket className="w-4 h-4" />
-                <span>Add</span>
+                <span>কার্টে রাখুন</span>
               </button>
               <button
                 type="button"
@@ -145,7 +143,7 @@ export function ProductDetailModal({
                 }}
                 className="flex-1 min-h-[46px] rounded-xl bg-gradient-to-r from-[#e2ae32] to-[#c98e0b] hover:from-[#ecc04c] hover:to-[#d99b12] text-[#141518] font-extrabold text-sm tracking-wide transition-colors cursor-pointer"
               >
-                ORDER NOW · ৳{(product.price * qty).toLocaleString('en-US')}
+                অর্ডার করুন · ৳{(product.price * qty).toLocaleString('en-US')}
               </button>
             </div>
           </div>

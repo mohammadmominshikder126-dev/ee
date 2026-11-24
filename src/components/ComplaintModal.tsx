@@ -32,7 +32,7 @@ export function ComplaintModal({ open, onClose }: ComplaintModalProps) {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Submit a complaint"
+      aria-label="অভিযোগ ও সাপোর্ট"
       className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center sm:p-4"
       onClick={handleClose}
     >
@@ -42,15 +42,15 @@ export function ComplaintModal({ open, onClose }: ComplaintModalProps) {
       >
         <div className="px-5 py-4 border-b border-neutral-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MessageSquareWarning className="w-5 h-5 text-[#12a800]" />
-            <h2 className="font-display text-lg font-bold text-[#171717]">
-              Complaint &amp; Support
+            <MessageSquareWarning className="w-5 h-5 text-[#b87e06]" />
+            <h2 className="font-display text-lg font-bold text-[#141518]">
+              অভিযোগ ও সাপোর্ট কেন্দ্র
             </h2>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            aria-label="Close complaint form"
+            aria-label="অভিযোগ ফর্ম বন্ধ করুন"
             className="w-10 h-10 rounded-xl bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center"
           >
             <X className="w-5 h-5" />
@@ -60,39 +60,39 @@ export function ComplaintModal({ open, onClose }: ComplaintModalProps) {
         {ticketId ? (
           <div className="p-6 text-center space-y-3">
             <CheckCircle2 className="w-10 h-10 text-[#12a800] mx-auto" />
-            <h3 className="font-display text-lg font-bold text-[#171717]">
-              Report Received ({ticketId})
+            <h3 className="font-display text-lg font-bold text-[#141518]">
+              অভিযোগ গৃহীত হয়েছে ({ticketId})
             </h3>
             <p className="text-sm text-neutral-600">
-              Our Apon jon e-shop care team will call you on <span className="font-mono-num">{phone}</span>{' '}
-              within 2 business hours.
+              আমাদের আপনজন ই-শপ টিম ২ কর্মঘণ্টার মধ্যে{' '}
+              <span className="font-mono-num">{phone}</span> নম্বরে যোগাযোগ করবে।
             </p>
             <button
               type="button"
               onClick={handleClose}
-              className="w-full min-h-[44px] rounded-xl bg-[#171717] text-white font-bold text-sm"
+              className="w-full min-h-[44px] rounded-xl bg-[#141518] text-white font-bold text-sm"
             >
-              Close
+              বন্ধ করুন
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
             <div>
               <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                Order ID (optional)
+                অর্ডার আইডি (ঐচ্ছিক)
               </label>
               <input
                 type="text"
                 value={orderRef}
                 onChange={(e) => setOrderRef(e.target.value)}
-                placeholder="SB-XXXXX"
-                className="w-full h-11 px-3.5 rounded-xl border border-neutral-300 focus:border-[#12a800] outline-none text-sm font-mono-num"
+                placeholder="AJ-XXXXX"
+                className="w-full h-11 px-3.5 rounded-xl border border-neutral-300 focus:border-[#c98e0b] outline-none text-sm font-mono-num"
               />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                Mobile Number
+                মোবাইল নম্বর
               </label>
               <input
                 type="tel"
@@ -100,29 +100,29 @@ export function ComplaintModal({ open, onClose }: ComplaintModalProps) {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="01XXXXXXXXX"
-                className="w-full h-11 px-3.5 rounded-xl border border-neutral-300 focus:border-[#12a800] outline-none text-sm font-mono-num"
+                className="w-full h-11 px-3.5 rounded-xl border border-neutral-300 focus:border-[#c98e0b] outline-none text-sm font-mono-num"
               />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                Issue Details
+                বিস্তারিত লিখুন
               </label>
               <textarea
                 required
                 rows={3}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Describe your product or delivery concern..."
-                className="w-full p-3.5 rounded-xl border border-neutral-300 focus:border-[#12a800] outline-none text-sm resize-none"
+                placeholder="পণ্য বা ডেলিভারি সংক্রান্ত আপনার মতামত বা সমস্যা লিখুন..."
+                className="w-full p-3.5 rounded-xl border border-neutral-300 focus:border-[#c98e0b] outline-none text-sm resize-none"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full min-h-[46px] rounded-xl bg-[#171717] hover:bg-[#12a800] text-white font-bold text-sm transition-colors"
+              className="w-full min-h-[46px] rounded-xl bg-[#141518] hover:bg-[#b87e06] text-white font-bold text-sm transition-colors"
             >
-              Submit Complaint
+              জমা দিন
             </button>
           </form>
         )}

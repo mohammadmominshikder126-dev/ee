@@ -56,9 +56,7 @@ export function ProductCard({
       </button>
 
       <div className="p-3.5 sm:p-4 flex flex-col flex-1">
-        <div className="text-[11px] font-medium text-neutral-500 uppercase tracking-wide mb-1">
-          {product.category}
-        </div>
+        <div className="text-[11px] font-medium text-neutral-500 mb-1">{product.category}</div>
 
         <button
           type="button"
@@ -71,9 +69,9 @@ export function ProductCard({
         </button>
 
         <div className="mt-1.5 text-[11px] font-medium text-neutral-500 font-mono-num flex items-center gap-1.5">
-          <span className="text-[#b87e06] font-semibold">Sold {product.sold}</span>
+          <span className="text-[#b87e06] font-semibold">বিক্রি {product.sold}</span>
           <span aria-hidden="true">·</span>
-          <span>Left {product.left}</span>
+          <span>বাকি {product.left}</span>
         </div>
 
         <div className="mt-2.5 flex items-baseline gap-2 font-mono-num">
@@ -91,13 +89,13 @@ export function ProductCard({
             onClick={() => onOrderNow(product)}
             className="flex-1 min-h-[44px] bg-[#141518] hover:bg-[#b87e06] text-white rounded-[10px] px-3 py-2.5 text-xs sm:text-[13px] font-bold tracking-wide transition-colors cursor-pointer whitespace-nowrap"
           >
-            ORDER NOW
+            অর্ডার করুন
           </button>
 
           <button
             type="button"
             onClick={handleAdd}
-            aria-label={`Add ${product.name} to cart`}
+            aria-label={`${product.name} কার্টে যোগ করুন`}
             className={`w-11 h-11 rounded-[10px] border-[1.5px] flex items-center justify-center transition-colors shrink-0 cursor-pointer ${
               justAdded
                 ? 'bg-[#c98e0b] border-[#c98e0b] text-white'
