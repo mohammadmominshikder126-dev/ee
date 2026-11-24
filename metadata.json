@@ -1,0 +1,6 @@
+{
+  "name": "Sobuj Bari",
+  "description": "Sobuj Bari — Gadgets for a smarter you. Shop trending RC toys, retro digital cameras, galaxy projectors, and smart accessories with Cash on Delivery across Bangladesh.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

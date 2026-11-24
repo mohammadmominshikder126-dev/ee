@@ -1,0 +1,147 @@
+import { Menu, Search, ShoppingBasket, User } from 'lucide-react';
+import { FormEvent } from 'react';
+import { CategoryKey } from '../types';
+
+interface HeaderProps {
+  cartCount: number;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+  onSearchSubmit: () => void;
+  onOpenMenu: () => void;
+  onOpenCart: () => void;
+  onNavigateHome: () => void;
+  onSelectCategory: (cat: CategoryKey) => void;
+  selectedCategory: CategoryKey;
+  onOpenTrackOrder: () => void;
+  onOpenLogin: () => void;
+  userName?: string | null;
+}
+
+const DESKTOP_NAV_CATS: CategoryKey[] = ['All', 'Camera', 'Gadgets', 'Home Decor', 'Toys'];
+
+export function Header({
+  cartCount,
+  searchQuery,
+  onSearchChange,
+  onSearchSubmit,
+  onOpenMenu,
+  onOpenCart,
+  onNavigateHome,
+  onSelectCategory,
+  selectedCategory,
+  onOpenTrackOrder,
+  onOpenLogin,
+  userName,
+}: HeaderProps) {
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    onSearchSubmit();
+  };
+
+  return (
+    <header className="bg-white border-b border-neutral-200/80 shadow-[0_3px_14px_rgba(0,0,0,0.04)] md:sticky md:top-0 z-30">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3 pb-3">
+        <div className="flex items-center justify-between gap-4 sm:gap-8">
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={onOpenMenu}
+              aria-label="Open navigation menu"
+              className="w-11 h-11 rounded-[14px] bg-[#f1f1f1] hover:bg-neutral-200 text-[#171717] flex items-center justify-center transition-colors lg:hidden"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={onNavigateHome}
+              className="text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#12a800] rounded-lg"
+            >
+              <span className="font-display text-[28px] sm:text-[34px] font-extrabold tracking-[-0.04em] leading-none block whitespace-nowrap">
+                <span className="text-[#12a800]">E-</span>
+                <span className="text-[#171717]">shop</span>
+              </span>
+              <span className="block text-[8px] sm:text-[9px] tracking-[0.26em] text-neutral-500 font-semibold mt-0.5 whitespace-nowrap">
+                — GADGETS FOR A SMARTER YOU —
+              </span>
+            </button>
+          </div>
+
+          <nav
+            aria-label="Primary categories"
+            className="hidden lg:flex items-center gap-6 text-sm font-medium text-neutral-600"
+          >
+            {DESKTOP_NAV_CATS.map((cat) => {
+              const active = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => onSelectCategory(cat)}
+                  className={`whitespace-nowrap shrink-0 py-1.5 border-b-2 transition-colors ${
+                    active
+                      ? 'border-[#12a800] text-[#171717] font-semibold'
+                      : 'border-transparent hover:text-[#171717]'
+                  }`}
+                >
+                  {cat === 'All' ? 'All Gadgets' : cat}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={onOpenTrackOrder}
+              className="whitespace-nowrap shrink-0 py-1.5 border-b-2 border-transparent hover:text-[#171717] transition-colors"
+            >
+              Track Order
+            </button>
+          </nav>
+
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={onOpenLogin}
+              className="hidden sm:flex items-center gap-2 h-11 px-3.5 rounded-xl border border-neutral-200 hover:border-neutral-300 text-sm font-semibold text-[#171717] transition-colors whitespace-nowrap shrink-0"
+            >
+              <User className="w-4 h-4 text-neutral-600" />
+              <span>{userName ? userName.split(' ')[0] : 'Log In'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onOpenCart}
+              aria-label={`Shopping cart with ${cartCount} items`}
+              className="w-12 h-12 rounded-full bg-[#171717] hover:bg-neutral-800 text-white flex items-center justify-center relative transition-colors shrink-0"
+            >
+              <ShoppingBasket className="w-5 h-5" />
+              <span className="font-mono-num absolute -right-1 -top-1 bg-white text-[#111] border-2 border-[#111] rounded-full text-[11px] font-bold w-6 h-6 flex items-center justify-center">
+                {cartCount}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="mt-3 flex items-center border-2 border-[#222] rounded-[13px] p-1 bg-white h-12 focus-within:border-[#12a800] transition-colors"
+        >
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search products..."
+            aria-label="Search products"
+            className="flex-1 min-w-0 px-3 text-[15px] text-[#171717] placeholder:text-neutral-400 outline-none bg-transparent"
+          />
+          <button
+            type="submit"
+            aria-label="Submit product search"
+            className="w-10 h-9 rounded-[9px] bg-[#171717] hover:bg-[#12a800] text-white flex items-center justify-center transition-colors shrink-0"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+        </form>
+      </div>
+    </header>
+  );
+}

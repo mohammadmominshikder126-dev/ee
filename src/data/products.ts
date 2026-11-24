@@ -1,0 +1,178 @@
+import { CategoryKey, Product, VerifiedPurchase } from '../types';
+
+export const CATEGORIES: CategoryKey[] = [
+  'All',
+  'Toys',
+  'Gadgets',
+  'Home Decor',
+  'Camera',
+  'Accessories',
+];
+
+export const PRODUCTS: Product[] = [
+  {
+    id: 'ae86-rc-drift-car',
+    name: 'AE86 RC Drift Car',
+    category: 'Toys',
+    price: 1990,
+    oldPrice: 2450,
+    discountLabel: '19%',
+    isFlashBadge: true,
+    image: '/src/assets/images/product_rc_drift_car_1795539283276.jpg',
+    sold: 0,
+    left: 299,
+    shortDesc:
+      'High-speed 4WD AE86 drift chassis with detachable roof-mounted Wi-Fi FPV camera and 2.4GHz pistol-grip controller.',
+    specs: [
+      '2.4GHz precision pistol-grip remote control',
+      'Detachable HD FPV roof camera with live phone view',
+      'Includes 4 drift tires + USB rechargeable battery',
+    ],
+  },
+  {
+    id: 'pink-bluetooth-speaker',
+    name: 'Pink Bluetooth Speaker',
+    category: 'Gadgets',
+    price: 999,
+    oldPrice: 1350,
+    discountLabel: '26%',
+    isFlashBadge: true,
+    image: '/src/assets/images/product_pink_bluetooth_speaker_1795539282729.jpg',
+    sold: 0,
+    left: 100,
+    shortDesc:
+      'Quilted mini handbag portable Bluetooth 5.3 speaker with gold chain strap, pearl charm accents, and punchy bass.',
+    specs: [
+      'Up to 16 hours continuous music playback',
+      'Bluetooth 5.3 + TF card + hands-free mic',
+      'Carry chain strap with detachable pearl charm',
+    ],
+  },
+  {
+    id: 'galaxy-projector-pro',
+    name: 'Galaxy Projector Pro',
+    category: 'Home Decor',
+    price: 3600,
+    oldPrice: 5600,
+    discountLabel: '36% OFF',
+    isFlashBadge: false,
+    image: '/src/assets/images/product_galaxy_projector_1795539283222.jpg',
+    sold: 14,
+    left: 42,
+    shortDesc:
+      'Ultra-sharp planetarium ceiling projector with interchangeable cosmos film discs, timer, and wireless remote.',
+    specs: [
+      'Includes 12 HD optical galaxy & nebula discs',
+      '360-degree silent rotation + auto shut-off timer',
+      'Remote control & braided USB-C power cable included',
+    ],
+  },
+  {
+    id: 'instant-printing-camera',
+    name: 'Instant Printing Camera',
+    category: 'Camera',
+    price: 3499,
+    oldPrice: 4500,
+    discountLabel: '22% OFF',
+    isFlashBadge: false,
+    image: '/src/assets/images/product_instant_camera_1795539283545.jpg',
+    sold: 28,
+    left: 35,
+    shortDesc:
+      'Zero-ink thermal instant print digital camera — snap photos and print crisp memories in under 3 seconds.',
+    specs: [
+      'Dual front & selfie 1080p lenses with fun filters',
+      'Inkless thermal printing with 3 paper rolls included',
+      'MicroSD slot & Type-C fast charging battery',
+    ],
+  },
+  {
+    id: 'digi-cam-digital-camera',
+    name: 'Digi Cam Digital Camera',
+    category: 'Camera',
+    price: 2850,
+    oldPrice: 3500,
+    discountLabel: '18% OFF',
+    isFlashBadge: false,
+    image: '/src/assets/images/product_digi_cam_1795539285199.jpg',
+    sold: 19,
+    left: 24,
+    shortDesc:
+      'Pocket-sized Y2K aesthetic digital camera with 24MP sensor, built-in flash, and braided wrist strap.',
+    specs: [
+      '24MP vintage-toned photography + 1080p video',
+      '16x digital zoom with anti-shake stabilization',
+      'Includes braided wrist strap & USB-C data cable',
+    ],
+  },
+  {
+    id: 'titanium-watch-ultra',
+    name: 'Titanium Smart Watch',
+    category: 'Accessories',
+    price: 2490,
+    oldPrice: 3300,
+    discountLabel: '25% OFF',
+    isFlashBadge: true,
+    image: '/src/assets/images/product_smartwatch_ultra_1795539285256.jpg',
+    sold: 11,
+    left: 64,
+    shortDesc:
+      'AMOLED always-on fitness smartwatch with Bluetooth calling, heart-rate tracking, and rugged ocean band.',
+    specs: [
+      '1.43-inch crisp AMOLED display with custom dials',
+      'Bluetooth calling, sleep & heart-rate sensors',
+      'IP68 water-resistant chassis · 7-day battery life',
+    ],
+  },
+];
+
+export const VERIFIED_PURCHASES: VerifiedPurchase[] = [
+  {
+    id: 'vp-1',
+    buyer: 'SIMON',
+    productId: 'instant-printing-camera',
+    productName: 'Instant Printing Camera',
+    timeAgo: 'Just now',
+    image: '/src/assets/images/product_instant_camera_1795539283545.jpg',
+  },
+  {
+    id: 'vp-2',
+    buyer: 'Shirin',
+    productId: 'digi-cam-digital-camera',
+    productName: 'Digi Cam Digital Camera',
+    timeAgo: '15 sec ago',
+    image: '/src/assets/images/product_digi_cam_1795539285199.jpg',
+  },
+  {
+    id: 'vp-3',
+    buyer: 'Md',
+    productId: 'ae86-rc-drift-car',
+    productName: 'AE86 RC Drift Car',
+    timeAgo: '30 sec ago',
+    image: '/src/assets/images/product_rc_drift_car_1795539283276.jpg',
+  },
+  {
+    id: 'vp-4',
+    buyer: 'Nusrat',
+    productId: 'pink-bluetooth-speaker',
+    productName: 'Pink Bluetooth Speaker',
+    timeAgo: '45 sec ago',
+    image: '/src/assets/images/product_pink_bluetooth_speaker_1795539282729.jpg',
+  },
+  {
+    id: 'vp-5',
+    buyer: 'Rafiq',
+    productId: 'galaxy-projector-pro',
+    productName: 'Galaxy Projector Pro',
+    timeAgo: '1 min ago',
+    image: '/src/assets/images/product_galaxy_projector_1795539283222.jpg',
+  },
+  {
+    id: 'vp-6',
+    buyer: 'Tanvir',
+    productId: 'titanium-watch-ultra',
+    productName: 'Titanium Smart Watch',
+    timeAgo: '2 mins ago',
+    image: '/src/assets/images/product_smartwatch_ultra_1795539285256.jpg',
+  },
+];
