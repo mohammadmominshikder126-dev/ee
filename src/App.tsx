@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Home, ShoppingBag, Store, User } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { TouchEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { AboutCompanyModal } from './components/AboutCompanyModal';
 import { CartDrawer } from './components/CartDrawer';
 import { CartPageView } from './components/CartPageView';
 import { CheckoutModal } from './components/CheckoutModal';
@@ -55,7 +56,13 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('সব');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [cart, setCart] = useState<CartItem[]>(() => readStorage(STORAGE_CART_KEY, []));
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    const saved = readStorage<CartItem[]>(STORAGE_CART_KEY, []);
+    return saved.map((item) => {
+      const latest = PRODUCTS.find((p) => p.id === item.product.id);
+      return latest ? { ...item, product: latest } : item;
+    });
+  });
   const [cartProfile, setCartProfile] = useState<CartProfile | null>(() =>
     readStorage(STORAGE_CART_PROFILE_KEY, null)
   );
@@ -67,6 +74,7 @@ export default function App() {
   const [trackOpen, setTrackOpen] = useState(false);
   const [trackInitialId, setTrackInitialId] = useState<string | undefined>(undefined);
   const [complaintOpen, setComplaintOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
 
   const [checkoutItems, setCheckoutItems] = useState<CartItem[]>([]);
@@ -465,6 +473,14 @@ export default function App() {
           <span aria-hidden="true">·</span>
           <button
             type="button"
+            onClick={() => setAboutOpen(true)}
+            className="hover:text-[#141518]"
+          >
+            আমাদের সম্পর্কে জানুন
+          </button>
+          <span aria-hidden="true">·</span>
+          <button
+            type="button"
             onClick={() => navigateToTab('login')}
             className="hover:text-[#141518]"
           >
@@ -551,7 +567,10 @@ export default function App() {
         onOpenTrackOrder={() => handleOpenTrackOrder()}
         onOpenComplaint={() => setComplaintOpen(true)}
         onOpenAccount={() => navigateToTab('login')}
+        onOpenAbout={() => setAboutOpen(true)}
       />
+
+      <AboutCompanyModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
 
       <ProductDetailModal
         product={detailProduct}

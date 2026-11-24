@@ -3,6 +3,7 @@ import {
   Facebook,
   Headphones,
   Home,
+  Info,
   Lightbulb,
   MessageSquareWarning,
   Truck,
@@ -19,6 +20,7 @@ interface MobileDrawerProps {
   onOpenTrackOrder: () => void;
   onOpenComplaint: () => void;
   onOpenAccount: () => void;
+  onOpenAbout: () => void;
 }
 
 const OFFICIAL_FACEBOOK_URL = 'https://www.facebook.com/';
@@ -31,6 +33,7 @@ export function MobileDrawer({
   onOpenTrackOrder,
   onOpenComplaint,
   onOpenAccount,
+  onOpenAbout,
 }: MobileDrawerProps) {
   if (!open) return null;
 
@@ -125,6 +128,18 @@ export function MobileDrawer({
           >
             <MessageSquareWarning className="w-5 h-5 text-neutral-500" />
             <span>অভিযোগ / সাপোর্ট</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              onOpenAbout();
+              onClose();
+            }}
+            className="w-full px-6 py-4 text-left text-[16px] font-medium text-[#141518] hover:bg-[#faf8f3] flex items-center gap-3.5"
+          >
+            <Info className="w-5 h-5 text-[#b87e06]" />
+            <span>আমাদের সম্পর্কে জানুন</span>
           </button>
 
           <button

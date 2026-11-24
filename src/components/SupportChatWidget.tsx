@@ -1,4 +1,4 @@
-const WHATSAPP_NUMBER = '8801700000000';
+const WHATSAPP_NUMBER = '8801619502669';
 const WHATSAPP_MESSAGE = encodeURIComponent(
   'আসসালামু আলাইকুম আপনজন ই-শপ! আমি একটি প্রোডাক্ট সম্পর্কে জানতে / অর্ডার করতে চাই।'
 );

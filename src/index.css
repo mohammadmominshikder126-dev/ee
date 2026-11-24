@@ -2,8 +2,8 @@
 
 @layer base {
   :root {
-    --font-display: 'Hind Siliguri', 'Outfit', system-ui, -apple-system, sans-serif;
-    --font-sans: 'Hind Siliguri', system-ui, -apple-system, sans-serif;
+    --font-display: 'Hind Siliguri', 'Noto Sans Bengali', 'Outfit', system-ui, -apple-system, sans-serif;
+    --font-sans: 'Hind Siliguri', 'Noto Sans Bengali', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;
   }
 
