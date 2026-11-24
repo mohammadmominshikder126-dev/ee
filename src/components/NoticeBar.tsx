@@ -2,14 +2,16 @@ import { X, Zap } from 'lucide-react';
 
 interface NoticeBarProps {
   visible: boolean;
+  text?: string;
   onDismiss: () => void;
 }
 
-const NOTICE_TEXT =
+const DEFAULT_NOTICE_TEXT =
   'আপনার কাঙ্ক্ষিত প্রোডাক্ট খুঁজে না পেলে আমাদের আপনজন ই-শপ ফেসবুক পেজে নক করবেন। ওয়েবসাইটে সব প্রোডাক্ট দেখানো নাও হতে পারে। সেরা দামে পছন্দের পণ্য কিনুন';
 
-export function NoticeBar({ visible, onDismiss }: NoticeBarProps) {
+export function NoticeBar({ visible, text, onDismiss }: NoticeBarProps) {
   if (!visible) return null;
+  const displayNotice = text || DEFAULT_NOTICE_TEXT;
 
   return (
     <div
@@ -24,9 +26,9 @@ export function NoticeBar({ visible, onDismiss }: NoticeBarProps) {
 
       <div className="flex-1 overflow-hidden relative h-full flex items-center">
         <div className="sb-ticker-track text-neutral-100 text-xs sm:text-[13px] font-medium">
-          <span className="px-6 whitespace-nowrap">{NOTICE_TEXT} •</span>
+          <span className="px-6 whitespace-nowrap">{displayNotice} •</span>
           <span className="px-6 whitespace-nowrap" aria-hidden="true">
-            {NOTICE_TEXT} •
+            {displayNotice} •
           </span>
         </div>
       </div>

@@ -1,10 +1,18 @@
-const WHATSAPP_NUMBER = '8801619502669';
-const WHATSAPP_MESSAGE = encodeURIComponent(
-  'আসসালামু আলাইকুম আপনজন ই-শপ! আমি একটি প্রোডাক্ট সম্পর্কে জানতে / অর্ডার করতে চাই।'
-);
+interface SupportChatWidgetProps {
+  whatsappNumber?: string;
+  whatsappMessage?: string;
+}
 
-export function SupportChatWidget() {
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`;
+const DEFAULT_WHATSAPP_NUMBER = '8801619502669';
+const DEFAULT_WHATSAPP_MESSAGE =
+  'আসসালামু আলাইকুম আপনজন ই-শপ! আমি একটি প্রোডাক্ট সম্পর্কে জানতে / অর্ডার করতে চাই।';
+
+export function SupportChatWidget({
+  whatsappNumber = DEFAULT_WHATSAPP_NUMBER,
+  whatsappMessage = DEFAULT_WHATSAPP_MESSAGE,
+}: SupportChatWidgetProps) {
+  const cleanNumber = whatsappNumber.replace(/\D/g, '') || DEFAULT_WHATSAPP_NUMBER;
+  const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
     <a

@@ -15,9 +15,14 @@ interface HeaderProps {
   onOpenTrackOrder: () => void;
   onOpenLogin: () => void;
   userName?: string | null;
+  categories?: string[];
+  brandPrimary?: string;
+  brandSecondary?: string;
+  tagline?: string;
+  logoUrl?: string;
 }
 
-const DESKTOP_NAV_CATS: CategoryKey[] = ['সব', 'লাইটিং', 'গ্যাজেট', 'সিরাম আইটেম'];
+const DEFAULT_NAV_CATS: CategoryKey[] = ['সব', 'লাইটিং', 'গ্যাজেট', 'সিরামিক আইটেম'];
 
 export function Header({
   cartCount,
@@ -32,7 +37,13 @@ export function Header({
   onOpenTrackOrder,
   onOpenLogin,
   userName,
+  categories,
+  brandPrimary = 'আপনজন',
+  brandSecondary = 'ই-শপ',
+  tagline = 'আপনার বিশ্বাস • আমাদের অঙ্গীকার',
+  logoUrl = '/assets/aistudio/Screenshot_20261124-231551_28c4b6f8.jpg',
 }: HeaderProps) {
+  const navCats = categories ? ['সব', ...categories] : DEFAULT_NAV_CATS;
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     onSearchSubmit();
@@ -59,19 +70,19 @@ export function Header({
             >
               <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-[#d49b1a] bg-[#121316] shrink-0 shadow-xs flex items-center justify-center">
                 <img
-                  src="/assets/aistudio/Screenshot_20261124-231551_28c4b6f8.jpg"
-                  alt="আপনজন ই-শপ লোগো"
+                  src={logoUrl}
+                  alt={`${brandPrimary} ${brandSecondary} লোগো`}
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover object-center scale-[1.08]"
                 />
               </span>
               <span className="min-w-0">
                 <span className="font-display text-[20px] sm:text-[26px] font-extrabold leading-none block whitespace-nowrap">
-                  <span className="text-[#b87e06]">আপনজন </span>
-                  <span className="text-[#141518]">ই-শপ</span>
+                  <span className="text-[#b87e06]">{brandPrimary} </span>
+                  <span className="text-[#141518]">{brandSecondary}</span>
                 </span>
                 <span className="block text-[9px] sm:text-[10px] tracking-[0.06em] text-neutral-500 font-semibold mt-1 whitespace-nowrap">
-                  আপনার বিশ্বাস • আমাদের অঙ্গীকার
+                  {tagline}
                 </span>
               </span>
             </button>
@@ -81,7 +92,7 @@ export function Header({
             aria-label="প্রধান ক্যাটাগরি"
             className="hidden lg:flex items-center gap-6 text-sm font-medium text-neutral-600"
           >
-            {DESKTOP_NAV_CATS.map((cat) => {
+            {navCats.map((cat) => {
               const active = selectedCategory === cat;
               return (
                 <button

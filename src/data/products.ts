@@ -1,6 +1,6 @@
 import { CategoryKey, Product, VerifiedPurchase } from '../types';
 
-export const CATEGORIES: CategoryKey[] = ['সব', 'লাইটিং', 'গ্যাজেট', 'সিরাম আইটেম'];
+export const CATEGORIES: CategoryKey[] = ['সব', 'লাইটিং', 'গ্যাজেট', 'সিরামিক আইটেম'];
 
 export const PRODUCTS: Product[] = [
   {
@@ -82,7 +82,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 'vitamin-c-serum',
     name: 'ভিটামিন সি ব্রাইটেনিং সিরাম',
-    category: 'সিরাম আইটেম',
+    category: 'সিরামিক আইটেম',
     price: 890,
     oldPrice: 1250,
     discountLabel: '২৯% ছাড়',
@@ -101,7 +101,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 'hyaluronic-glow-serum',
     name: 'হায়ালুরনিক অ্যাসিড গ্লো সিরাম',
-    category: 'সিরাম আইটেম',
+    category: 'সিরামিক আইটেম',
     price: 950,
     oldPrice: 1300,
     discountLabel: '২৭% ছাড়',

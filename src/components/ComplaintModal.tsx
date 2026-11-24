@@ -1,12 +1,14 @@
 import { CheckCircle2, MessageSquareWarning, X } from 'lucide-react';
 import { FormEvent, useState } from 'react';
+import { ComplaintTicket } from '../types';
 
 interface ComplaintModalProps {
   open: boolean;
   onClose: () => void;
+  onSubmitComplaint?: (ticket: ComplaintTicket) => void;
 }
 
-export function ComplaintModal({ open, onClose }: ComplaintModalProps) {
+export function ComplaintModal({ open, onClose, onSubmitComplaint }: ComplaintModalProps) {
   const [orderRef, setOrderRef] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
@@ -17,7 +19,16 @@ export function ComplaintModal({ open, onClose }: ComplaintModalProps) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!phone.trim() || !message.trim()) return;
-    setTicketId(`CMP-${Math.floor(1000 + Math.random() * 9000)}`);
+    const id = `CMP-${Math.floor(1000 + Math.random() * 9000)}`;
+    setTicketId(id);
+    onSubmitComplaint?.({
+      id,
+      orderRef: orderRef.trim() || undefined,
+      phone: phone.trim(),
+      message: message.trim(),
+      createdAt: new Date().toISOString(),
+      status: 'নতুন',
+    });
   };
 
   const handleClose = () => {

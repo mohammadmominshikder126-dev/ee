@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, Home, ShoppingBag, Store, User } from 'lucid
 import { AnimatePresence, motion } from 'motion/react';
 import { TouchEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { AboutCompanyModal } from './components/AboutCompanyModal';
+import { AdminPanel } from './components/admin/AdminPanel';
 import { CartDrawer } from './components/CartDrawer';
 import { CartPageView } from './components/CartPageView';
 import { CheckoutModal } from './components/CheckoutModal';
@@ -16,21 +17,41 @@ import { ProductDetailModal } from './components/ProductDetailModal';
 import { SupportChatWidget } from './components/SupportChatWidget';
 import { TrackOrderModal } from './components/TrackOrderModal';
 import { VerifiedOrderToast } from './components/VerifiedOrderToast';
-import { CATEGORIES, PRODUCTS, VERIFIED_PURCHASES } from './data/products';
+import { PRODUCTS, VERIFIED_PURCHASES } from './data/products';
 import {
+  DEFAULT_BANNERS,
+  DEFAULT_CATEGORIES,
+  DEFAULT_COUPONS,
+  DEFAULT_WEBSITE_SETTINGS,
+} from './data/storeDefaults';
+import {
+  BannerSlide,
   CartItem,
   CartProfile,
   CategoryKey,
+  ComplaintTicket,
+  CouponCode,
   CustomerUser,
+  ManagedUser,
   NavTab,
   OrderRecord,
   Product,
+  VisitorEntry,
+  WebsiteSettings,
 } from './types';
 
 const STORAGE_CART_KEY = 'aponjon_cart_v1';
 const STORAGE_ORDERS_KEY = 'aponjon_orders_v1';
 const STORAGE_USER_KEY = 'aponjon_user_v1';
 const STORAGE_CART_PROFILE_KEY = 'aponjon_cart_profile_v1';
+const STORAGE_PRODUCTS_KEY = 'aponjon_products_v1';
+const STORAGE_CATEGORIES_KEY = 'aponjon_categories_v1';
+const STORAGE_BANNERS_KEY = 'aponjon_banners_v1';
+const STORAGE_COUPONS_KEY = 'aponjon_coupons_v1';
+const STORAGE_MANAGED_USERS_KEY = 'aponjon_managed_users_v1';
+const STORAGE_SETTINGS_KEY = 'aponjon_website_settings_v1';
+const STORAGE_VISITORS_KEY = 'aponjon_visitors_v1';
+const STORAGE_COMPLAINTS_KEY = 'aponjon_complaints_v1';
 
 const PAGE_ORDER: NavTab[] = ['home', 'shop', 'cart', 'login'];
 const PAGE_LABELS: Record<NavTab, string> = {
@@ -49,7 +70,46 @@ function readStorage<T>(key: string, fallback: T): T {
   }
 }
 
+function writeStorage<T>(key: string, value: T) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
 export default function App() {
+  const [adminMode, setAdminMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.location.hash === '#admin' || window.location.search.includes('admin=1');
+  });
+
+  const [products, setProducts] = useState<Product[]>(() =>
+    readStorage(STORAGE_PRODUCTS_KEY, PRODUCTS)
+  );
+  const [categories, setCategories] = useState<string[]>(() =>
+    readStorage(STORAGE_CATEGORIES_KEY, DEFAULT_CATEGORIES)
+  );
+  const [banners, setBanners] = useState<BannerSlide[]>(() =>
+    readStorage(STORAGE_BANNERS_KEY, DEFAULT_BANNERS)
+  );
+  const [coupons, setCoupons] = useState<CouponCode[]>(() =>
+    readStorage(STORAGE_COUPONS_KEY, DEFAULT_COUPONS)
+  );
+  const [managedUsers, setManagedUsers] = useState<ManagedUser[]>(() =>
+    readStorage(STORAGE_MANAGED_USERS_KEY, [])
+  );
+  const [websiteSettings, setWebsiteSettings] = useState<WebsiteSettings>(() => ({
+    ...DEFAULT_WEBSITE_SETTINGS,
+    ...readStorage<Partial<WebsiteSettings>>(STORAGE_SETTINGS_KEY, {}),
+  }));
+  const [visitors, setVisitors] = useState<VisitorEntry[]>(() =>
+    readStorage(STORAGE_VISITORS_KEY, [])
+  );
+  const [complaints, setComplaints] = useState<ComplaintTicket[]>(() =>
+    readStorage(STORAGE_COMPLAINTS_KEY, [])
+  );
+
   const [noticeVisible, setNoticeVisible] = useState(true);
   const [activeTab, setActiveTab] = useState<NavTab>('home');
   const [slideDirection, setSlideDirection] = useState<1 | -1>(1);
@@ -58,8 +118,9 @@ export default function App() {
 
   const [cart, setCart] = useState<CartItem[]>(() => {
     const saved = readStorage<CartItem[]>(STORAGE_CART_KEY, []);
+    const storedProducts = readStorage<Product[]>(STORAGE_PRODUCTS_KEY, PRODUCTS);
     return saved.map((item) => {
-      const latest = PRODUCTS.find((p) => p.id === item.product.id);
+      const latest = storedProducts.find((p) => p.id === item.product.id);
       return latest ? { ...item, product: latest } : item;
     });
   });
@@ -85,32 +146,23 @@ export default function App() {
   const [toastIndex, setToastIndex] = useState(0);
 
   const touchStartRef = useRef<{ x: number; y: number; skip: boolean } | null>(null);
+  const visitLoggedRef = useRef(false);
+
+  // Persist admin & storefront state
+  useEffect(() => writeStorage(STORAGE_PRODUCTS_KEY, products), [products]);
+  useEffect(() => writeStorage(STORAGE_CATEGORIES_KEY, categories), [categories]);
+  useEffect(() => writeStorage(STORAGE_BANNERS_KEY, banners), [banners]);
+  useEffect(() => writeStorage(STORAGE_COUPONS_KEY, coupons), [coupons]);
+  useEffect(() => writeStorage(STORAGE_MANAGED_USERS_KEY, managedUsers), [managedUsers]);
+  useEffect(() => writeStorage(STORAGE_SETTINGS_KEY, websiteSettings), [websiteSettings]);
+  useEffect(() => writeStorage(STORAGE_VISITORS_KEY, visitors), [visitors]);
+  useEffect(() => writeStorage(STORAGE_COMPLAINTS_KEY, complaints), [complaints]);
+  useEffect(() => writeStorage(STORAGE_CART_KEY, cart), [cart]);
+  useEffect(() => writeStorage(STORAGE_ORDERS_KEY, orders), [orders]);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_CART_KEY, JSON.stringify(cart));
-    } catch {
-      // Ignore storage quota errors
-    }
-  }, [cart]);
-
-  useEffect(() => {
-    try {
-      if (cartProfile) {
-        window.localStorage.setItem(STORAGE_CART_PROFILE_KEY, JSON.stringify(cartProfile));
-      }
-    } catch {
-      // Ignore storage quota errors
-    }
+    if (cartProfile) writeStorage(STORAGE_CART_PROFILE_KEY, cartProfile);
   }, [cartProfile]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_ORDERS_KEY, JSON.stringify(orders));
-    } catch {
-      // Ignore storage quota errors
-    }
-  }, [orders]);
 
   useEffect(() => {
     try {
@@ -120,21 +172,77 @@ export default function App() {
         window.localStorage.removeItem(STORAGE_USER_KEY);
       }
     } catch {
-      // Ignore storage quota errors
+      // Ignore
     }
   }, [user]);
 
+  // Track real page visit once per page load
   useEffect(() => {
+    if (visitLoggedRef.current) return;
+    visitLoggedRef.current = true;
+    const now = new Date();
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const entry: VisitorEntry = {
+      id: `vis-${Date.now()}`,
+      timestamp: now.toISOString(),
+      dateKey: now.toISOString().slice(0, 10),
+      device: isMobile ? 'মোবাইল' : 'ডেস্কটপ',
+      page: window.location.hash === '#admin' ? 'এডমিন প্যানেল' : 'হোম স্টোর',
+      referrer: document.referrer ? new URL(document.referrer).hostname : 'সরাসরি ভিজিট',
+    };
+    setVisitors((prev) => [entry, ...prev].slice(0, 300));
+  }, []);
+
+  // Listen to hash changes (#admin)
+  useEffect(() => {
+    const onHash = () => {
+      if (window.location.hash === '#admin') setAdminMode(true);
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  // Live purchase toast interval
+  useEffect(() => {
+    const ms = Math.max(5, websiteSettings.liveToastIntervalSec || 15) * 1000;
     const interval = window.setInterval(() => {
       setToastIndex((idx) => (idx + 1) % VERIFIED_PURCHASES.length);
       setToastDismissed(false);
-    }, 15000);
+    }, ms);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [websiteSettings.liveToastIntervalSec]);
+
+  const registerCustomerRecord = (
+    name: string,
+    identifier: string,
+    source: ManagedUser['source'],
+    address?: string
+  ) => {
+    setManagedUsers((prev) => {
+      const idx = prev.findIndex((u) => u.identifier === identifier);
+      if (idx >= 0) {
+        return prev.map((u, i) =>
+          i === idx ? { ...u, name, address: address || u.address } : u
+        );
+      }
+      return [
+        {
+          id: `usr-${Date.now()}`,
+          name,
+          identifier,
+          address,
+          joinedAt: new Date().toISOString(),
+          status: 'সক্রিয়',
+          source,
+        },
+        ...prev,
+      ];
+    });
+  };
 
   const filteredProducts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return PRODUCTS.filter((product) => {
+    return products.filter((product) => {
       const matchesCategory = selectedCategory === 'সব' || product.category === selectedCategory;
       const matchesSearch =
         !q ||
@@ -143,7 +251,7 @@ export default function App() {
         product.shortDesc.toLowerCase().includes(q);
       return matchesCategory && matchesSearch;
     });
-  }, [selectedCategory, searchQuery]);
+  }, [products, selectedCategory, searchQuery]);
 
   const cartCount = useMemo(
     () => cart.reduce((sum, item) => sum + item.quantity, 0),
@@ -247,6 +355,7 @@ export default function App() {
 
   const handleOrderCreated = (order: OrderRecord, clearedFromCart: boolean) => {
     setOrders((prev) => [order, ...prev]);
+    registerCustomerRecord(order.customerName, order.phone, 'অর্ডার', order.address);
     if (clearedFromCart) {
       setCart([]);
     }
@@ -257,8 +366,107 @@ export default function App() {
     setTrackOpen(true);
   };
 
+  const openAdminPanel = () => {
+    window.location.hash = 'admin';
+    setAdminMode(true);
+    window.scrollTo({ top: 0 });
+  };
+
+  const exitAdminPanel = () => {
+    if (window.location.hash === '#admin') {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+    setAdminMode(false);
+    window.scrollTo({ top: 0 });
+  };
+
+  const handleExportBackup = () => {
+    const payload = {
+      products,
+      categories,
+      banners,
+      coupons,
+      orders,
+      managedUsers,
+      websiteSettings,
+      complaints,
+      exportedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `aponjon-eshop-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportBackup = (jsonText: string): boolean => {
+    try {
+      const parsed = JSON.parse(jsonText);
+      if (Array.isArray(parsed.products)) setProducts(parsed.products);
+      if (Array.isArray(parsed.categories)) setCategories(parsed.categories);
+      if (Array.isArray(parsed.banners)) setBanners(parsed.banners);
+      if (Array.isArray(parsed.coupons)) setCoupons(parsed.coupons);
+      if (Array.isArray(parsed.orders)) setOrders(parsed.orders);
+      if (Array.isArray(parsed.managedUsers)) setManagedUsers(parsed.managedUsers);
+      if (Array.isArray(parsed.complaints)) setComplaints(parsed.complaints);
+      if (parsed.websiteSettings && typeof parsed.websiteSettings === 'object') {
+        setWebsiteSettings({ ...DEFAULT_WEBSITE_SETTINGS, ...parsed.websiteSettings });
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  if (adminMode) {
+    return (
+      <AdminPanel
+        products={products}
+        onSaveProducts={setProducts}
+        categories={categories}
+        onSaveCategories={setCategories}
+        orders={orders}
+        onUpdateOrderStatus={(orderId, status) =>
+          setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)))
+        }
+        onDeleteOrder={(orderId) =>
+          setOrders((prev) => prev.filter((o) => o.id !== orderId))
+        }
+        coupons={coupons}
+        onSaveCoupons={setCoupons}
+        users={managedUsers}
+        onSaveUsers={setManagedUsers}
+        banners={banners}
+        onSaveBanners={setBanners}
+        settings={websiteSettings}
+        onSaveSettings={setWebsiteSettings}
+        onResetSettings={() => setWebsiteSettings(DEFAULT_WEBSITE_SETTINGS)}
+        visitors={visitors}
+        onClearVisitors={() => setVisitors([])}
+        complaints={complaints}
+        onToggleComplaintStatus={(id) =>
+          setComplaints((prev) =>
+            prev.map((c) =>
+              c.id === id
+                ? { ...c, status: c.status === 'নতুন' ? 'সমাধান হয়েছে' : 'নতুন' }
+                : c
+            )
+          )
+        }
+        onExportBackup={handleExportBackup}
+        onImportBackup={handleImportBackup}
+        onExitAdmin={exitAdminPanel}
+      />
+    );
+  }
+
+  const allCategoryTabs: CategoryKey[] = ['সব', ...categories];
   const currentToast =
-    !toastDismissed && activeTab !== 'login' ? VERIFIED_PURCHASES[toastIndex] : null;
+    websiteSettings.liveToastEnabled && !toastDismissed && activeTab !== 'login'
+      ? VERIFIED_PURCHASES[toastIndex]
+      : null;
 
   const renderProductGrid = () => (
     <section id="products" aria-label="পণ্যের তালিকা">
@@ -267,7 +475,7 @@ export default function App() {
           data-no-swipe="true"
           className="flex items-center gap-2 overflow-x-auto pb-1"
         >
-          {CATEGORIES.map((cat) => {
+          {allCategoryTabs.map((cat) => {
             const active = selectedCategory === cat;
             return (
               <button
@@ -328,7 +536,11 @@ export default function App() {
 
   return (
     <div className="min-h-dvh flex flex-col bg-[#f6f5f1] text-[#141518] pb-24 md:pb-12">
-      <NoticeBar visible={noticeVisible} onDismiss={() => setNoticeVisible(false)} />
+      <NoticeBar
+        visible={websiteSettings.noticeEnabled && noticeVisible}
+        text={websiteSettings.noticeText}
+        onDismiss={() => setNoticeVisible(false)}
+      />
 
       <Header
         cartCount={cartCount}
@@ -351,6 +563,11 @@ export default function App() {
         onOpenTrackOrder={() => handleOpenTrackOrder()}
         onOpenLogin={() => navigateToTab('login')}
         userName={user?.name}
+        categories={categories}
+        brandPrimary={websiteSettings.brandPrimary}
+        brandSecondary={websiteSettings.brandSecondary}
+        tagline={websiteSettings.tagline}
+        logoUrl={websiteSettings.logoUrl}
       />
 
       <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-3">
@@ -415,7 +632,14 @@ export default function App() {
           >
             {activeTab === 'home' && (
               <>
-                <FlashSaleBanner onViewAll={() => navigateToTab('shop')} />
+                {websiteSettings.flashSaleEnabled && (
+                  <FlashSaleBanner
+                    banners={banners}
+                    title={websiteSettings.flashSaleTitle}
+                    subtitle={websiteSettings.flashSaleSubtitle}
+                    onViewAll={() => navigateToTab('shop')}
+                  />
+                )}
                 {renderProductGrid()}
               </>
             )}
@@ -426,7 +650,10 @@ export default function App() {
               <CartPageView
                 items={cart}
                 profile={cartProfile}
-                onSaveProfile={(prof) => setCartProfile(prof)}
+                onSaveProfile={(prof) => {
+                  setCartProfile(prof);
+                  registerCustomerRecord(prof.name, prof.phone, 'কার্ট', prof.address);
+                }}
                 onUpdateQty={handleUpdateQty}
                 onRemoveItem={handleRemoveItem}
                 onCheckout={handleCartCheckout}
@@ -439,7 +666,14 @@ export default function App() {
                 <LoginView
                   user={user}
                   orders={orders}
-                  onLogin={(loggedInUser) => setUser(loggedInUser)}
+                  onLogin={(loggedInUser) => {
+                    setUser(loggedInUser);
+                    registerCustomerRecord(
+                      loggedInUser.name,
+                      loggedInUser.identifier,
+                      'রেজিস্ট্রেশন'
+                    );
+                  }}
                   onLogout={() => setUser(null)}
                   onTrackOrder={(orderId) => handleOpenTrackOrder(orderId)}
                   onBackToShop={() => navigateToTab('home')}
@@ -452,7 +686,7 @@ export default function App() {
 
       <footer className="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-10 pb-4 text-center">
         <div className="inline-flex items-center justify-center bg-[#141518] text-[#f0be4d] rounded-full px-8 py-2.5 text-sm font-bold tracking-wide shadow-sm">
-          আপনজন ই-শপ
+          {websiteSettings.brandPrimary} {websiteSettings.brandSecondary}
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs text-neutral-500">
           <button
@@ -486,6 +720,14 @@ export default function App() {
           >
             কাস্টমার অ্যাকাউন্ট
           </button>
+          <span aria-hidden="true">·</span>
+          <button
+            type="button"
+            onClick={openAdminPanel}
+            className="font-semibold text-[#b87e06] hover:underline"
+          >
+            এডমিন প্যানেল
+          </button>
         </div>
       </footer>
 
@@ -493,12 +735,15 @@ export default function App() {
         purchase={currentToast}
         onDismiss={() => setToastDismissed(true)}
         onSelectProductId={(productId) => {
-          const found = PRODUCTS.find((p) => p.id === productId);
+          const found = products.find((p) => p.id === productId);
           if (found) setDetailProduct(found);
         }}
       />
 
-      <SupportChatWidget />
+      <SupportChatWidget
+        whatsappNumber={websiteSettings.whatsappNumber}
+        whatsappMessage={websiteSettings.whatsappMessage}
+      />
 
       <nav
         aria-label="মোবাইল ন্যাভিগেশন"
@@ -568,9 +813,16 @@ export default function App() {
         onOpenComplaint={() => setComplaintOpen(true)}
         onOpenAccount={() => navigateToTab('login')}
         onOpenAbout={() => setAboutOpen(true)}
+        onOpenAdmin={openAdminPanel}
+        categories={categories}
+        facebookUrl={websiteSettings.facebookUrl}
       />
 
-      <AboutCompanyModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
+      <AboutCompanyModal
+        open={aboutOpen}
+        onClose={() => setAboutOpen(false)}
+        settings={websiteSettings}
+      />
 
       <ProductDetailModal
         product={detailProduct}
@@ -583,7 +835,10 @@ export default function App() {
         open={cartOpen}
         items={cart}
         profile={cartProfile}
-        onSaveProfile={(prof) => setCartProfile(prof)}
+        onSaveProfile={(prof) => {
+          setCartProfile(prof);
+          registerCustomerRecord(prof.name, prof.phone, 'কার্ট', prof.address);
+        }}
         onClose={() => setCartOpen(false)}
         onUpdateQty={handleUpdateQty}
         onRemoveItem={handleRemoveItem}
@@ -598,6 +853,8 @@ export default function App() {
         onOrderCreated={handleOrderCreated}
         isDirectOrder={checkoutDirect}
         onTrackOrder={(orderId) => handleOpenTrackOrder(orderId)}
+        settings={websiteSettings}
+        coupons={coupons}
       />
 
       <TrackOrderModal
@@ -607,7 +864,11 @@ export default function App() {
         onClose={() => setTrackOpen(false)}
       />
 
-      <ComplaintModal open={complaintOpen} onClose={() => setComplaintOpen(false)} />
+      <ComplaintModal
+        open={complaintOpen}
+        onClose={() => setComplaintOpen(false)}
+        onSubmitComplaint={(ticket) => setComplaints((prev) => [ticket, ...prev])}
+      />
     </div>
   );
 }

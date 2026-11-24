@@ -1,11 +1,13 @@
 import {
   Droplets,
   Facebook,
+  FolderOpen,
   Headphones,
   Home,
   Info,
   Lightbulb,
   MessageSquareWarning,
+  Shield,
   Truck,
   User,
   X,
@@ -21,9 +23,12 @@ interface MobileDrawerProps {
   onOpenComplaint: () => void;
   onOpenAccount: () => void;
   onOpenAbout: () => void;
+  onOpenAdmin?: () => void;
+  categories?: string[];
+  facebookUrl?: string;
 }
 
-const OFFICIAL_FACEBOOK_URL = 'https://www.facebook.com/';
+const DEFAULT_FACEBOOK_URL = 'https://www.facebook.com/';
 
 export function MobileDrawer({
   open,
@@ -34,14 +39,24 @@ export function MobileDrawer({
   onOpenComplaint,
   onOpenAccount,
   onOpenAbout,
+  onOpenAdmin,
+  categories = ['লাইটিং', 'গ্যাজেট', 'সিরামিক আইটেম'],
+  facebookUrl = DEFAULT_FACEBOOK_URL,
 }: MobileDrawerProps) {
   if (!open) return null;
 
-  const categoryItems: { label: string; cat: CategoryKey; icon: typeof Lightbulb }[] = [
-    { label: 'লাইটিং', cat: 'লাইটিং', icon: Lightbulb },
-    { label: 'গ্যাজেট', cat: 'গ্যাজেট', icon: Headphones },
-    { label: 'সিরাম আইটেম', cat: 'সিরাম আইটেম', icon: Droplets },
-  ];
+  const getCategoryIcon = (cat: string) => {
+    if (cat === 'লাইটিং') return Lightbulb;
+    if (cat === 'গ্যাজেট') return Headphones;
+    if (cat === 'সিরামিক আইটেম') return Droplets;
+    return FolderOpen;
+  };
+
+  const categoryItems = categories.map((cat) => ({
+    label: cat,
+    cat,
+    icon: getCategoryIcon(cat),
+  }));
 
   return (
     <div
@@ -96,7 +111,7 @@ export function MobileDrawer({
           ))}
 
           <a
-            href={OFFICIAL_FACEBOOK_URL}
+            href={facebookUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={onClose}
@@ -153,6 +168,20 @@ export function MobileDrawer({
             <User className="w-5 h-5 text-neutral-500" />
             <span>আমার অ্যাকাউন্ট</span>
           </button>
+
+          {onOpenAdmin && (
+            <button
+              type="button"
+              onClick={() => {
+                onOpenAdmin();
+                onClose();
+              }}
+              className="w-full px-6 py-4 text-left text-[16px] font-semibold text-[#b87e06] hover:bg-[#faf8f3] flex items-center gap-3.5"
+            >
+              <Shield className="w-5 h-5 text-[#b87e06]" />
+              <span>এডমিন প্যানেল</span>
+            </button>
+          )}
         </nav>
       </aside>
     </div>

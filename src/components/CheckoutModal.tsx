@@ -5,12 +5,20 @@ import {
   Phone,
   ShieldCheck,
   Smartphone,
+  Tag,
   Truck,
   User,
   X,
 } from 'lucide-react';
 import { FormEvent, useEffect, useState } from 'react';
-import { CartItem, CartProfile, OrderRecord, PaymentMethod } from '../types';
+import {
+  CartItem,
+  CartProfile,
+  CouponCode,
+  OrderRecord,
+  PaymentMethod,
+  WebsiteSettings,
+} from '../types';
 
 interface CheckoutModalProps {
   open: boolean;
@@ -20,6 +28,8 @@ interface CheckoutModalProps {
   onOrderCreated: (order: OrderRecord, clearedFromCart: boolean) => void;
   isDirectOrder: boolean;
   onTrackOrder: (orderId: string) => void;
+  settings?: WebsiteSettings;
+  coupons?: CouponCode[];
 }
 
 const PAYMENT_OPTIONS: { id: PaymentMethod; label: string }[] = [
@@ -46,6 +56,8 @@ export function CheckoutModal({
   onOrderCreated,
   isDirectOrder,
   onTrackOrder,
+  settings,
+  coupons = [],
 }: CheckoutModalProps) {
   const [customerName, setCustomerName] = useState(cartProfile?.name || '');
   const [phone, setPhone] = useState(cartProfile?.phone || '');
@@ -57,8 +69,15 @@ export function CheckoutModal({
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvc, setCardCvc] = useState('');
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponCode | null>(null);
+  const [couponFeedback, setCouponFeedback] = useState('');
   const [error, setError] = useState('');
   const [confirmedOrder, setConfirmedOrder] = useState<OrderRecord | null>(null);
+
+  const availablePayments = PAYMENT_OPTIONS.filter(
+    (opt) => !settings?.enabledPayments || settings.enabledPayments[opt.id] !== false
+  );
 
   useEffect(() => {
     if (cartProfile) {
@@ -71,11 +90,44 @@ export function CheckoutModal({
   if (!open) return null;
 
   const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const deliveryFee = zone === 'dhaka' ? 60 : 120;
-  const total = subtotal + deliveryFee;
+  const dhakaFee = settings?.dhakaDeliveryFee ?? 60;
+  const outsideFee = settings?.outsideDeliveryFee ?? 120;
+  const deliveryFee = zone === 'dhaka' ? dhakaFee : outsideFee;
+
+  let discount = 0;
+  if (appliedCoupon && appliedCoupon.active && subtotal >= appliedCoupon.minOrder) {
+    discount =
+      appliedCoupon.discountType === 'percent'
+        ? Math.round((subtotal * appliedCoupon.value) / 100)
+        : Math.min(subtotal, appliedCoupon.value);
+  }
+
+  const total = Math.max(0, subtotal - discount + deliveryFee);
 
   const isMobileWallet =
     paymentMethod === 'bkash' || paymentMethod === 'nagad' || paymentMethod === 'rocket';
+
+  const handleApplyCoupon = () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) {
+      setAppliedCoupon(null);
+      setCouponFeedback('');
+      return;
+    }
+    const found = coupons.find((c) => c.code.toUpperCase() === code && c.active);
+    if (!found) {
+      setAppliedCoupon(null);
+      setCouponFeedback('সঠিক বা সক্রিয় কুপন কোড নয়।');
+      return;
+    }
+    if (subtotal < found.minOrder) {
+      setAppliedCoupon(null);
+      setCouponFeedback(`এই কুপনের জন্য ন্যূনতম ৳${found.minOrder} অর্ডার প্রয়োজন।`);
+      return;
+    }
+    setAppliedCoupon(found);
+    setCouponFeedback(`কুপন "${found.code}" সফলভাবে প্রযোজ্য হয়েছে!`);
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -142,6 +194,8 @@ export function CheckoutModal({
         image: i.product.image,
       })),
       subtotal,
+      discount: discount > 0 ? discount : undefined,
+      couponCode: discount > 0 ? appliedCoupon?.code : undefined,
       deliveryFee,
       total,
       status: 'অর্ডার গ্রহণ',
@@ -154,6 +208,7 @@ export function CheckoutModal({
   const handleResetAndClose = () => {
     setConfirmedOrder(null);
     setError('');
+    setCouponFeedback('');
     onClose();
   };
 
@@ -272,12 +327,51 @@ export function CheckoutModal({
                 <span>ডেলিভারি চার্জ</span>
                 <span className="font-mono-num font-semibold">৳{deliveryFee}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex items-center justify-between text-xs text-[#12a800] font-semibold">
+                  <span>কুপন ছাড় ({appliedCoupon?.code})</span>
+                  <span className="font-mono-num">-৳{discount.toLocaleString('en-US')}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between text-sm font-bold text-[#141518]">
                 <span>সর্বমোট</span>
                 <span className="font-mono-num text-base text-[#b87e06]">
                   ৳{total.toLocaleString('en-US')}
                 </span>
               </div>
+
+              {coupons.some((c) => c.active) && (
+                <div className="pt-2 border-t border-neutral-200/70">
+                  <div className="flex gap-2">
+                    <div className="flex-1 flex items-center bg-white border border-neutral-300 rounded-xl px-2.5 h-9">
+                      <Tag className="w-3.5 h-3.5 text-neutral-400 mr-1.5 shrink-0" />
+                      <input
+                        type="text"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value)}
+                        placeholder="কুপন কোড থাকলে লিখুন"
+                        className="w-full text-xs font-mono-num uppercase outline-none bg-transparent"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      className="px-3 h-9 rounded-xl bg-[#141518] hover:bg-[#b87e06] text-white text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      প্রয়োগ
+                    </button>
+                  </div>
+                  {couponFeedback && (
+                    <div
+                      className={`text-[11px] font-medium mt-1 ${
+                        appliedCoupon ? 'text-[#12a800]' : 'text-red-600'
+                      }`}
+                    >
+                      {couponFeedback}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {error && (
@@ -350,7 +444,7 @@ export function CheckoutModal({
                     }`}
                   >
                     <Truck className="w-3.5 h-3.5" />
-                    ঢাকার ভেতরে (৳৬০)
+                    ঢাকার ভেতরে (৳{dhakaFee})
                   </button>
                   <button
                     type="button"
@@ -362,7 +456,7 @@ export function CheckoutModal({
                     }`}
                   >
                     <Truck className="w-3.5 h-3.5" />
-                    ঢাকার বাইরে (৳১২০)
+                    ঢাকার বাইরে (৳{outsideFee})
                   </button>
                 </div>
               </div>
@@ -372,7 +466,7 @@ export function CheckoutModal({
                   পেমেন্ট মাধ্যম নির্বাচন করুন
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {PAYMENT_OPTIONS.map((method) => (
+                  {availablePayments.map((method) => (
                     <button
                       key={method.id}
                       type="button"
@@ -398,8 +492,13 @@ export function CheckoutModal({
                   <div className="flex items-center gap-2 text-xs font-semibold text-[#141518]">
                     <Smartphone className="w-4 h-4 text-[#b87e06]" />
                     <span>
-                      {PAYMENT_LABELS[paymentMethod]} এর মাধ্যমে ৳{total.toLocaleString('en-US')} পাঠিয়ে
-                      তথ্য দিন:
+                      {PAYMENT_LABELS[paymentMethod]}{' '}
+                      {settings?.merchantWallets?.[
+                        paymentMethod as 'bkash' | 'nagad' | 'rocket'
+                      ]
+                        ? `(${settings.merchantWallets[paymentMethod as 'bkash' | 'nagad' | 'rocket']}) `
+                        : ''}
+                      নম্বরে ৳{total.toLocaleString('en-US')} পাঠিয়ে তথ্য দিন:
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">

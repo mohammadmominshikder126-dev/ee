@@ -1,11 +1,13 @@
 import { CheckCircle2, Globe2, Info, PackageCheck, ShieldCheck, Truck, X } from 'lucide-react';
+import { WebsiteSettings } from '../types';
 
 interface AboutCompanyModalProps {
   open: boolean;
   onClose: () => void;
+  settings?: WebsiteSettings;
 }
 
-export function AboutCompanyModal({ open, onClose }: AboutCompanyModalProps) {
+export function AboutCompanyModal({ open, onClose, settings }: AboutCompanyModalProps) {
   if (!open) return null;
 
   return (
@@ -39,7 +41,7 @@ export function AboutCompanyModal({ open, onClose }: AboutCompanyModalProps) {
           <div className="flex items-center gap-4 p-4 rounded-2xl bg-[#faf8f2] border border-[#e6dfc9]">
             <span className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#d49b1a] bg-[#121316] shrink-0 shadow-sm flex items-center justify-center">
               <img
-                src="/assets/aistudio/Screenshot_20261124-231551_28c4b6f8.jpg"
+                src={settings?.logoUrl || '/assets/aistudio/Screenshot_20261124-231551_28c4b6f8.jpg'}
                 alt="আপনজন ই-শপ লোগো"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover object-center scale-[1.08]"
@@ -47,27 +49,35 @@ export function AboutCompanyModal({ open, onClose }: AboutCompanyModalProps) {
             </span>
             <div>
               <h3 className="font-display text-xl font-extrabold text-[#141518]">
-                <span className="text-[#b87e06]">আপনজন </span>ই-শপ
+                <span className="text-[#b87e06]">{settings?.brandPrimary || 'আপনজন'} </span>
+                {settings?.brandSecondary || 'ই-শপ'}
               </h3>
               <p className="text-xs font-semibold text-neutral-600 mt-0.5">
-                আপনার বিশ্বাস • আমাদের অঙ্গীকার
+                {settings?.aboutSubTagline || 'Your Trust • Our Promiss'}
               </p>
               <p className="text-xs text-neutral-500 mt-1">
-                সরাসরি আমদানিকৃত লাইটিং, গ্যাজেট ও সিরাম আইটেম
+                সরাসরি আমদানিকৃত লাইটিং, গ্যাজেট ও সিরামিক আইটেম
               </p>
             </div>
           </div>
 
-          <div className="space-y-3 text-sm text-neutral-700 leading-relaxed">
+          <div className="space-y-3 text-sm text-neutral-700 leading-relaxed bg-[#faf8f2] border border-[#e6dfc9] rounded-2xl p-4">
             <p>
-              <strong className="text-[#141518]">আপনজন ই-শপ</strong> একটি বিশ্বস্ত অনলাইন শপ, যেখানে
-              গ্রাহকদের চাহিদা অনুযায়ী সেরা মানের আধুনিক লাইটিং, স্মার্ট গ্যাজেট ও ত্বকের যত্নে কার্যকর
-              সিরাম আইটেম সরবরাহ করা হয়।
+              {settings?.aboutBodyOne ||
+                '🇨🇳 আমরা সরাসরি চীন থেকে বিভিন্ন ধরনের ইউনিক পণ্য, স্মার্ট গ্যাজেট, হোম ডেকোর ও আকর্ষণীয় গিফট আইটেম আমদানি করি। আমাদের লক্ষ্য হলো গ্রাহকদের কাছে প্রিমিয়াম কোয়ালিটির পণ্য সাশ্রয়ী ও যুক্তিসংগত মূল্যে পৌঁছে দেওয়া।'}
             </p>
             <p>
-              আমরা প্রতিটি পণ্য সরাসরি দেশের বাইরে থেকে অর্ডার করে আমদানি করি। আমাদের প্রতিটি পণ্য
-              একদম ফ্রেশ এবং ফ্রেশ কন্ডিশনে কোয়ালিটি চেক করার পর গ্রাহকদের হাতে পৌঁছে দেওয়া হয়।
+              {settings?.aboutBodyTwo ||
+                'অসংখ্য সন্তুষ্ট কাস্টমারের ভালোবাসা, বিশ্বাস ও ইতিবাচক রিভিউ নিয়ে এগিয়ে চলছে আমাদের পথচলা। প্রতিটি গ্রাহকের সন্তুষ্টি ও আস্থা অর্জন করাই আমাদের প্রধান অঙ্গীকার।'}
             </p>
+            <div className="pt-2 border-t border-[#e6dfc9]">
+              <p className="font-display font-extrabold text-[#141518] text-base">
+                {settings?.brandPrimary || 'আপনজন'} E-Shop
+              </p>
+              <p className="text-xs font-bold text-[#b87e06] mt-0.5">
+                {settings?.aboutSubTagline || 'Your Trust • Our Promiss'}
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -115,7 +125,10 @@ export function AboutCompanyModal({ open, onClose }: AboutCompanyModalProps) {
           <div className="rounded-2xl border border-[#e6dfc9] bg-[#faf8f2] p-4 space-y-2 text-xs text-neutral-700">
             <div className="flex items-center gap-2 font-bold text-[#141518]">
               <CheckCircle2 className="w-4 h-4 text-[#12a800]" />
-              <span>হেল্পলাইন ও হোয়াটসঅ্যাপ: <span className="font-mono-num">01619502669</span></span>
+              <span>
+                হেল্পলাইন ও হোয়াটসঅ্যাপ:{' '}
+                <span className="font-mono-num">{settings?.aboutHelpline || '01619502669'}</span>
+              </span>
             </div>
             <p className="text-neutral-600">
               যেকোনো পণ্যের বিস্তারিত জানতে বা প্রি-অর্ডার করতে সরাসরি হোয়াটসঅ্যাপে যোগাযোগ করুন।
