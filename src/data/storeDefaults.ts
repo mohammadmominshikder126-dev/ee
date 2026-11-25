@@ -47,7 +47,7 @@ export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettings = {
   whatsappNumber: '8801619502669',
   whatsappMessage:
     'আসসালামু আলাইকুম আপনজন ই-শপ! আমি একটি প্রোডাক্ট সম্পর্কে জানতে / অর্ডার করতে চাই।',
-  facebookUrl: 'https://www.facebook.com/',
+  facebookUrl: 'https://www.facebook.com/aponjoneshop?mibextid=wwXIfr&mibextid=wwXIfr',
   dhakaDeliveryFee: 60,
   outsideDeliveryFee: 120,
   flashSaleEnabled: true,

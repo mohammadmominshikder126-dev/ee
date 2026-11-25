@@ -99,10 +99,21 @@ export default function App() {
   const [managedUsers, setManagedUsers] = useState<ManagedUser[]>(() =>
     readStorage(STORAGE_MANAGED_USERS_KEY, [])
   );
-  const [websiteSettings, setWebsiteSettings] = useState<WebsiteSettings>(() => ({
-    ...DEFAULT_WEBSITE_SETTINGS,
-    ...readStorage<Partial<WebsiteSettings>>(STORAGE_SETTINGS_KEY, {}),
-  }));
+  const [websiteSettings, setWebsiteSettings] = useState<WebsiteSettings>(() => {
+    const saved = readStorage<Partial<WebsiteSettings>>(STORAGE_SETTINGS_KEY, {});
+    const merged = {
+      ...DEFAULT_WEBSITE_SETTINGS,
+      ...saved,
+    };
+    if (
+      !merged.facebookUrl ||
+      merged.facebookUrl === 'https://www.facebook.com/' ||
+      merged.facebookUrl === 'https://www.facebook.com'
+    ) {
+      merged.facebookUrl = DEFAULT_WEBSITE_SETTINGS.facebookUrl;
+    }
+    return merged;
+  });
   const [visitors, setVisitors] = useState<VisitorEntry[]>(() =>
     readStorage(STORAGE_VISITORS_KEY, [])
   );

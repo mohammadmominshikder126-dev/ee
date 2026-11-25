@@ -28,7 +28,8 @@ interface MobileDrawerProps {
   facebookUrl?: string;
 }
 
-const DEFAULT_FACEBOOK_URL = 'https://www.facebook.com/';
+const DEFAULT_FACEBOOK_URL =
+  'https://www.facebook.com/aponjoneshop?mibextid=wwXIfr&mibextid=wwXIfr';
 
 export function MobileDrawer({
   open,
@@ -111,7 +112,13 @@ export function MobileDrawer({
           ))}
 
           <a
-            href={facebookUrl}
+            href={
+              facebookUrl &&
+              facebookUrl !== 'https://www.facebook.com/' &&
+              facebookUrl !== 'https://www.facebook.com'
+                ? facebookUrl
+                : DEFAULT_FACEBOOK_URL
+            }
             target="_blank"
             rel="noopener noreferrer"
             onClick={onClose}
