@@ -127,6 +127,8 @@ export interface WebsiteSettings {
   dhakaDeliveryFee: number;
   outsideDeliveryFee: number;
   flashSaleEnabled: boolean;
+  flashSaleTimerEnabled: boolean;
+  flashSaleEndAt: string;
   flashSaleTitle: string;
   flashSaleSubtitle: string;
   liveToastEnabled: boolean;

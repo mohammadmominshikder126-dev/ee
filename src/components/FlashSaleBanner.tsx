@@ -8,9 +8,18 @@ interface FlashSaleBannerProps {
   banners?: BannerSlide[];
   title?: string;
   subtitle?: string;
+  endAt?: string;
+  timerEnabled?: boolean;
 }
 
 const INITIAL_REMAINING_SECONDS = 351 * 86400 + 3 * 3600 + 43 * 60 + 40;
+
+function computeRemainingSeconds(endAt?: string): number {
+  if (!endAt) return INITIAL_REMAINING_SECONDS;
+  const targetMs = new Date(endAt).getTime();
+  if (Number.isNaN(targetMs)) return INITIAL_REMAINING_SECONDS;
+  return Math.max(0, Math.floor((targetMs - Date.now()) / 1000));
+}
 
 const DEFAULT_BANNERS: BannerSlide[] = [
   {
@@ -32,23 +41,26 @@ export function FlashSaleBanner({
   banners,
   title = 'ফ্ল্যাশ সেল',
   subtitle = 'বিশেষ ছাড় — দ্রুত অর্ডার করুন!',
+  endAt,
+  timerEnabled = true,
 }: FlashSaleBannerProps) {
   const activeSlides = (banners && banners.length > 0 ? banners : DEFAULT_BANNERS).filter(
     (b) => b.active
   );
   const slides = activeSlides.length > 0 ? activeSlides : DEFAULT_BANNERS;
 
-  const [remaining, setRemaining] = useState(INITIAL_REMAINING_SECONDS);
+  const [remaining, setRemaining] = useState(() => computeRemainingSeconds(endAt));
   const [bannerIndex, setBannerIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
+    setRemaining(computeRemainingSeconds(endAt));
     const timer = window.setInterval(() => {
-      setRemaining((prev) => (prev > 0 ? prev - 1 : 0));
+      setRemaining(computeRemainingSeconds(endAt));
     }, 1000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [endAt]);
 
   useEffect(() => {
     if (slides.length <= 1) return;
@@ -193,28 +205,30 @@ export function FlashSaleBanner({
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 lg:gap-6">
-          <div>
-            <div className="text-sm font-semibold text-[#e7dfc9] mb-2">সময় বাকি</div>
-            <div className="flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
-              {timeUnits.map((unit, idx) => (
-                <div key={unit.label} className="flex items-center gap-1.5 sm:gap-2">
-                  <div className="bg-[#fffdf8] text-[#141518] rounded-[13px] min-w-[60px] sm:min-w-[66px] px-2 py-2 text-center shadow-sm">
-                    <span className="font-mono-num block text-xl sm:text-[22px] font-bold leading-none">
-                      {unit.value}
-                    </span>
-                    <small className="block text-[11px] text-neutral-500 mt-1 font-medium">
-                      {unit.label}
-                    </small>
+          {timerEnabled !== false && (
+            <div>
+              <div className="text-sm font-semibold text-[#e7dfc9] mb-2">সময় বাকি</div>
+              <div className="flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
+                {timeUnits.map((unit, idx) => (
+                  <div key={unit.label} className="flex items-center gap-1.5 sm:gap-2">
+                    <div className="bg-[#fffdf8] text-[#141518] rounded-[13px] min-w-[60px] sm:min-w-[66px] px-2 py-2 text-center shadow-sm">
+                      <span className="font-mono-num block text-xl sm:text-[22px] font-bold leading-none">
+                        {unit.value}
+                      </span>
+                      <small className="block text-[11px] text-neutral-500 mt-1 font-medium">
+                        {unit.label}
+                      </small>
+                    </div>
+                    {idx < timeUnits.length - 1 && (
+                      <span className="text-xl font-bold text-[#e0ab2b] select-none" aria-hidden="true">
+                        :
+                      </span>
+                    )}
                   </div>
-                  {idx < timeUnits.length - 1 && (
-                    <span className="text-xl font-bold text-[#e0ab2b] select-none" aria-hidden="true">
-                      :
-                    </span>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <button
             type="button"

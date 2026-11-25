@@ -51,6 +51,10 @@ export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettings = {
   dhakaDeliveryFee: 60,
   outsideDeliveryFee: 120,
   flashSaleEnabled: true,
+  flashSaleTimerEnabled: true,
+  flashSaleEndAt: new Date(
+    Date.now() + (351 * 86400 + 3 * 3600 + 43 * 60 + 40) * 1000
+  ).toISOString(),
   flashSaleTitle: 'ফ্ল্যাশ সেল',
   flashSaleSubtitle: 'বিশেষ ছাড় — দ্রুত অর্ডার করুন!',
   liveToastEnabled: true,

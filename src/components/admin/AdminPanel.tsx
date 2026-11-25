@@ -5,6 +5,7 @@ import {
   Bell,
   Calendar,
   CheckCircle2,
+  Clock,
   CloudUpload,
   Crown,
   Download,
@@ -33,7 +34,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { ChangeEvent, FormEvent, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import { compressImageFile, toBengaliDigits } from '../../data/storeDefaults';
 import {
   BannerSlide,
@@ -117,6 +118,20 @@ function getStatusShortLabel(status: OrderRecord['status']) {
   }
 }
 
+function extractRemainingParts(endAt?: string) {
+  const fallback = { days: '351', hours: '3', mins: '43', secs: '40' };
+  if (!endAt) return fallback;
+  const targetMs = new Date(endAt).getTime();
+  if (Number.isNaN(targetMs)) return fallback;
+  const totalSec = Math.max(0, Math.floor((targetMs - Date.now()) / 1000));
+  return {
+    days: String(Math.floor(totalSec / 86400)),
+    hours: String(Math.floor((totalSec % 86400) / 3600)),
+    mins: String(Math.floor((totalSec % 3600) / 60)),
+    secs: String(totalSec % 60),
+  };
+}
+
 export function AdminPanel({
   products,
   onSaveProducts,
@@ -187,6 +202,32 @@ export function AdminPanel({
 
   // Settings local draft
   const [draftSettings, setDraftSettings] = useState<WebsiteSettings>(settings);
+
+  // Flash sale timer control state
+  const [timerDays, setTimerDays] = useState(
+    () => extractRemainingParts(settings.flashSaleEndAt).days
+  );
+  const [timerHours, setTimerHours] = useState(
+    () => extractRemainingParts(settings.flashSaleEndAt).hours
+  );
+  const [timerMinutes, setTimerMinutes] = useState(
+    () => extractRemainingParts(settings.flashSaleEndAt).mins
+  );
+  const [timerSeconds, setTimerSeconds] = useState(
+    () => extractRemainingParts(settings.flashSaleEndAt).secs
+  );
+
+  useEffect(() => {
+    setDraftSettings(settings);
+  }, [settings]);
+
+  useEffect(() => {
+    const parts = extractRemainingParts(settings.flashSaleEndAt);
+    setTimerDays(parts.days);
+    setTimerHours(parts.hours);
+    setTimerMinutes(parts.mins);
+    setTimerSeconds(parts.secs);
+  }, [settings.flashSaleEndAt]);
 
   // Security PIN unlock state
   const [pinVerified, setPinVerified] = useState(!settings.adminPinEnabled);
@@ -476,6 +517,23 @@ export function AdminPanel({
     e.preventDefault();
     onSaveSettings(draftSettings);
     showToast('ওয়েবসাইট সেটিংস সফলভাবে সেভ হয়েছে!');
+  };
+
+  const handleSaveFlashSaleTimer = () => {
+    const d = Math.max(0, Math.floor(Number(timerDays) || 0));
+    const h = Math.max(0, Math.min(23, Math.floor(Number(timerHours) || 0)));
+    const m = Math.max(0, Math.min(59, Math.floor(Number(timerMinutes) || 0)));
+    const s = Math.max(0, Math.min(59, Math.floor(Number(timerSeconds) || 0)));
+    const totalSeconds = d * 86400 + h * 3600 + m * 60 + s;
+    const nextEndAt = new Date(Date.now() + totalSeconds * 1000).toISOString();
+    const nextSettings: WebsiteSettings = {
+      ...settings,
+      flashSaleEndAt: nextEndAt,
+      flashSaleTimerEnabled: settings.flashSaleTimerEnabled ?? true,
+    };
+    onSaveSettings(nextSettings);
+    setDraftSettings(nextSettings);
+    showToast(`ফ্ল্যাশ সেল টাইমার (${toBengaliDigits(d)} দিন) সেভ হয়েছে!`);
   };
 
   const handleSaveSecurity = (e: FormEvent) => {
@@ -2157,6 +2215,107 @@ export function AdminPanel({
                 </div>
               </div>
 
+              <div className="space-y-3 pt-4 border-t border-neutral-100">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-[#b87e06]" />
+                    <span className="text-xs font-bold">ফ্ল্যাশ সেল ও কাউন্টডাউন টাইমার</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={draftSettings.flashSaleEnabled}
+                        onChange={(e) =>
+                          setDraftSettings({
+                            ...draftSettings,
+                            flashSaleEnabled: e.target.checked,
+                          })
+                        }
+                        className="w-4 h-4 accent-[#c98e0b]"
+                      />
+                      <span>ফ্ল্যাশ সেল ব্যানার চালু</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={draftSettings.flashSaleTimerEnabled !== false}
+                        onChange={(e) =>
+                          setDraftSettings({
+                            ...draftSettings,
+                            flashSaleTimerEnabled: e.target.checked,
+                          })
+                        }
+                        className="w-4 h-4 accent-[#c98e0b]"
+                      />
+                      <span>টাইমার দেখান</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 items-end bg-neutral-50 border border-neutral-200 rounded-xl p-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-neutral-600 mb-1">
+                      দিন (Days)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={9999}
+                      value={timerDays}
+                      onChange={(e) => setTimerDays(e.target.value)}
+                      className="w-full h-10 px-3 rounded-xl border border-neutral-300 bg-white text-sm font-bold font-mono-num"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-neutral-600 mb-1">
+                      ঘণ্টা (0-23)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={23}
+                      value={timerHours}
+                      onChange={(e) => setTimerHours(e.target.value)}
+                      className="w-full h-10 px-3 rounded-xl border border-neutral-300 bg-white text-sm font-bold font-mono-num"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-neutral-600 mb-1">
+                      মিনিট (0-59)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={59}
+                      value={timerMinutes}
+                      onChange={(e) => setTimerMinutes(e.target.value)}
+                      className="w-full h-10 px-3 rounded-xl border border-neutral-300 bg-white text-sm font-bold font-mono-num"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-neutral-600 mb-1">
+                      সেকেন্ড (0-59)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={59}
+                      value={timerSeconds}
+                      onChange={(e) => setTimerSeconds(e.target.value)}
+                      className="w-full h-10 px-3 rounded-xl border border-neutral-300 bg-white text-sm font-bold font-mono-num"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSaveFlashSaleTimer}
+                    className="col-span-2 sm:col-span-1 h-10 px-3 rounded-xl bg-[#141518] hover:bg-[#23252a] text-[#f4c41c] font-bold text-xs cursor-pointer whitespace-nowrap"
+                  >
+                    টাইমার সেট করুন
+                  </button>
+                </div>
+              </div>
+
               <button
                 type="submit"
                 className="w-full sm:w-auto px-8 min-h-[46px] rounded-xl bg-[#f4c41c] hover:bg-[#e5b510] text-[#111317] font-extrabold text-sm cursor-pointer"
@@ -2216,8 +2375,47 @@ export function AdminPanel({
                   </button>
                 </form>
 
-                <div className="bg-white text-[#141518] rounded-2xl p-5 space-y-3">
-                  <h3 className="font-display text-base font-bold">ফ্ল্যাশ সেল টেক্সট কাস্টমাইজ</h3>
+                <div className="bg-white text-[#141518] rounded-2xl p-5 space-y-3.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-[#b87e06]" />
+                      <h3 className="font-display text-base font-bold">
+                        ফ্ল্যাশ সেল ও টাইমার কাস্টমাইজ
+                      </h3>
+                    </div>
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#fef3c7] text-[#b45309]">
+                      {settings.flashSaleTimerEnabled !== false ? 'টাইমার চালু' : 'টাইমার বন্ধ'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.flashSaleEnabled}
+                        onChange={(e) =>
+                          onSaveSettings({ ...settings, flashSaleEnabled: e.target.checked })
+                        }
+                        className="w-4 h-4 accent-[#c98e0b]"
+                      />
+                      <span>ফ্ল্যাশ সেল সেকশন দেখান</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.flashSaleTimerEnabled !== false}
+                        onChange={(e) =>
+                          onSaveSettings({
+                            ...settings,
+                            flashSaleTimerEnabled: e.target.checked,
+                          })
+                        }
+                        className="w-4 h-4 accent-[#c98e0b]"
+                      />
+                      <span>কাউন্টডাউন টাইমার দেখান</span>
+                    </label>
+                  </div>
+
                   <input
                     type="text"
                     value={settings.flashSaleTitle}
@@ -2236,6 +2434,73 @@ export function AdminPanel({
                     placeholder="বিশেষ ছাড় — দ্রুত অর্ডার করুন!"
                     className="w-full h-10 px-3 rounded-xl border border-neutral-300 text-sm"
                   />
+
+                  <div className="pt-2 border-t border-neutral-100 space-y-2.5">
+                    <div className="text-xs font-bold text-[#141518]">
+                      নিজের ইচ্ছামতো টাইমার (দিন / ঘণ্টা / মিনিট / সেকেন্ড) সেট করুন
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-bold text-neutral-500 mb-1 text-center">
+                          দিন
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={9999}
+                          value={timerDays}
+                          onChange={(e) => setTimerDays(e.target.value)}
+                          className="w-full h-10 px-2 rounded-xl border border-neutral-300 text-center text-sm font-bold font-mono-num outline-none focus:border-[#c98e0b]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-neutral-500 mb-1 text-center">
+                          ঘণ্টা
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={23}
+                          value={timerHours}
+                          onChange={(e) => setTimerHours(e.target.value)}
+                          className="w-full h-10 px-2 rounded-xl border border-neutral-300 text-center text-sm font-bold font-mono-num outline-none focus:border-[#c98e0b]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-neutral-500 mb-1 text-center">
+                          মিনিট
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={59}
+                          value={timerMinutes}
+                          onChange={(e) => setTimerMinutes(e.target.value)}
+                          className="w-full h-10 px-2 rounded-xl border border-neutral-300 text-center text-sm font-bold font-mono-num outline-none focus:border-[#c98e0b]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-neutral-500 mb-1 text-center">
+                          সেকেন্ড
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={59}
+                          value={timerSeconds}
+                          onChange={(e) => setTimerSeconds(e.target.value)}
+                          className="w-full h-10 px-2 rounded-xl border border-neutral-300 text-center text-sm font-bold font-mono-num outline-none focus:border-[#c98e0b]"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleSaveFlashSaleTimer}
+                      className="w-full min-h-[42px] rounded-xl bg-[#f4c41c] hover:bg-[#e5b510] text-[#111317] font-extrabold text-sm cursor-pointer"
+                    >
+                      টাইমার আপডেট ও সেভ করুন
+                    </button>
+                  </div>
                 </div>
               </div>
 

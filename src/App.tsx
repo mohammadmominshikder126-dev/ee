@@ -442,7 +442,14 @@ export default function App() {
         onSaveBanners={setBanners}
         settings={websiteSettings}
         onSaveSettings={setWebsiteSettings}
-        onResetSettings={() => setWebsiteSettings(DEFAULT_WEBSITE_SETTINGS)}
+        onResetSettings={() =>
+          setWebsiteSettings({
+            ...DEFAULT_WEBSITE_SETTINGS,
+            flashSaleEndAt: new Date(
+              Date.now() + (351 * 86400 + 3 * 3600 + 43 * 60 + 40) * 1000
+            ).toISOString(),
+          })
+        }
         visitors={visitors}
         onClearVisitors={() => setVisitors([])}
         complaints={complaints}
@@ -637,6 +644,8 @@ export default function App() {
                     banners={banners}
                     title={websiteSettings.flashSaleTitle}
                     subtitle={websiteSettings.flashSaleSubtitle}
+                    endAt={websiteSettings.flashSaleEndAt}
+                    timerEnabled={websiteSettings.flashSaleTimerEnabled}
                     onViewAll={() => navigateToTab('shop')}
                   />
                 )}
