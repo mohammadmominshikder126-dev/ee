@@ -1,4 +1,4 @@
-import { Check, Package, ShoppingBasket, Zap } from 'lucide-react';
+import { Check, Package, ShoppingBasket, Truck, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { Product } from '../types';
 
@@ -82,6 +82,13 @@ export function ProductCard({
             ৳{product.oldPrice.toLocaleString('en-US')}
           </span>
         </div>
+
+        {product.freeDelivery && (
+          <div className="mt-2 inline-flex items-center gap-1.5 self-start bg-[#12a800] text-white rounded-lg px-2.5 py-1 text-[11px] font-bold shadow-2xs">
+            <Truck className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            <span>ফ্রি হোম ডেলিভারি</span>
+          </div>
+        )}
 
         <div className="mt-auto pt-3 flex items-center gap-2">
           <button

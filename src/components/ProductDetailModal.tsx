@@ -89,11 +89,18 @@ export function ProductDetailModal({
               ))}
             </ul>
 
-            <div className="mt-4 pt-4 border-t border-neutral-100 flex items-center gap-4 text-xs text-neutral-600">
-              <span className="flex items-center gap-1.5">
-                <Truck className="w-4 h-4 text-[#b87e06]" />
-                ক্যাশ অন ডেলিভারি
-              </span>
+            <div className="mt-4 pt-4 border-t border-neutral-100 flex flex-wrap items-center gap-4 text-xs text-neutral-600">
+              {product.freeDelivery ? (
+                <span className="flex items-center gap-1.5 font-bold text-[#12a800]">
+                  <Truck className="w-4 h-4 text-[#12a800]" />
+                  ফ্রি হোম ডেলিভারি
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <Truck className="w-4 h-4 text-[#b87e06]" />
+                  ক্যাশ অন ডেলিভারি
+                </span>
+              )}
               <span className="flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-[#b87e06]" />
                 স্টকে আছে {product.left} টি

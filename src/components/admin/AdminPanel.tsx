@@ -159,6 +159,7 @@ export function AdminPanel({
   const [pImage, setPImage] = useState('');
   const [pLeft, setPLeft] = useState('50');
   const [pFlash, setPFlash] = useState(true);
+  const [pFreeDelivery, setPFreeDelivery] = useState(false);
   const [pDesc, setPDesc] = useState('');
   const [pSpecs, setPSpecs] = useState('');
 
@@ -308,6 +309,7 @@ export function AdminPanel({
     setPImage('');
     setPLeft('50');
     setPFlash(true);
+    setPFreeDelivery(false);
     setPDesc('');
     setPSpecs('');
   };
@@ -337,6 +339,7 @@ export function AdminPanel({
       oldPrice: oldNum,
       discountLabel: autoDiscount,
       isFlashBadge: pFlash,
+      freeDelivery: pFreeDelivery,
       image: pImage.trim() || '/src/assets/images/product_galaxy_projector_1795539283222.jpg',
       sold: editingProductId
         ? products.find((p) => p.id === editingProductId)?.sold ?? 0
@@ -369,6 +372,7 @@ export function AdminPanel({
     setPImage(prod.image);
     setPLeft(String(prod.left));
     setPFlash(Boolean(prod.isFlashBadge));
+    setPFreeDelivery(Boolean(prod.freeDelivery));
     setPDesc(prod.shortDesc);
     setPSpecs(prod.specs.join('\n'));
     setActiveTab('products');
@@ -1252,15 +1256,27 @@ export function AdminPanel({
                   />
                 </div>
 
-                <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={pFlash}
-                    onChange={(e) => setPFlash(e.target.checked)}
-                    className="w-4 h-4 accent-[#c98e0b]"
-                  />
-                  <span>ফ্ল্যাশ সেল ব্যাজ (⚡) দেখান</span>
-                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={pFlash}
+                      onChange={(e) => setPFlash(e.target.checked)}
+                      className="w-4 h-4 accent-[#c98e0b]"
+                    />
+                    <span>ফ্ল্যাশ সেল ব্যাজ (⚡) দেখান</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 text-xs font-semibold text-[#15803d] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={pFreeDelivery}
+                      onChange={(e) => setPFreeDelivery(e.target.checked)}
+                      className="w-4 h-4 accent-[#15803d]"
+                    />
+                    <span>ফ্রি হোম ডেলিভারি চালু করুন (শুধু এই প্রোডাক্টে দেখাবে)</span>
+                  </label>
+                </div>
 
                 <button
                   type="submit"
@@ -1292,6 +1308,7 @@ export function AdminPanel({
                           <div className="text-sm font-bold truncate">{prod.name}</div>
                           <div className="text-xs text-neutral-500">
                             {prod.category} · স্টক: {toBengaliDigits(prod.left)}
+                            {prod.freeDelivery ? ' · ফ্রি হোম ডেলিভারি' : ''}
                           </div>
                           <div className="font-mono-num text-xs font-bold text-[#b87e06] mt-0.5">
                             ৳{prod.price.toLocaleString('en-US')}{' '}
@@ -1303,6 +1320,30 @@ export function AdminPanel({
                       </div>
 
                       <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextVal = !prod.freeDelivery;
+                            onSaveProducts(
+                              products.map((p) =>
+                                p.id === prod.id ? { ...p, freeDelivery: nextVal } : p
+                              )
+                            );
+                            showToast(
+                              nextVal
+                                ? `"${prod.name}"-এ ফ্রি হোম ডেলিভারি চালু হয়েছে।`
+                                : `"${prod.name}"-এর ফ্রি হোম ডেলিভারি বন্ধ করা হয়েছে।`
+                            );
+                          }}
+                          title="ফ্রি হোম ডেলিভারি চালু/বন্ধ করুন"
+                          className={`px-2.5 h-9 rounded-xl text-[11px] font-bold cursor-pointer transition-colors ${
+                            prod.freeDelivery
+                              ? 'bg-[#12a800] text-white'
+                              : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                          }`}
+                        >
+                          {prod.freeDelivery ? 'ফ্রি ডেলিভারি ✓' : 'ফ্রি ডেলিভারি'}
+                        </button>
                         <button
                           type="button"
                           onClick={() => startEditProduct(prod)}

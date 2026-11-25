@@ -10,6 +10,7 @@ export interface Product {
   oldPrice: number;
   discountLabel: string;
   isFlashBadge?: boolean;
+  freeDelivery?: boolean;
   image: string;
   sold: number;
   left: number;
