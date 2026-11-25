@@ -68,10 +68,10 @@ export function ProductCard({
           </h3>
         </button>
 
-        <div className="mt-1.5 text-[11px] font-medium text-neutral-500 font-mono-num flex items-center gap-1.5">
-          <span className="text-[#b87e06] font-semibold">বিক্রি {product.sold}</span>
+        <div className="mt-1.5 inline-flex flex-wrap items-center gap-1.5 bg-[#ecfdf3] text-[#15803d] border border-[#bbf7d0] rounded-lg px-2 py-1 text-[11px] font-bold font-mono-num self-start">
+          <span>✓ {product.sold} জন কিনেছে</span>
           <span aria-hidden="true">·</span>
-          <span>বাকি {product.left}</span>
+          <span>স্টকে আছে {product.left} পিস</span>
         </div>
 
         <div className="mt-2.5 flex items-baseline gap-2 font-mono-num">

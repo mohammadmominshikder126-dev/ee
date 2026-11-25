@@ -25,6 +25,7 @@ import {
   DEFAULT_WEBSITE_SETTINGS,
 } from './data/storeDefaults';
 import {
+  AdminNotification,
   BannerSlide,
   CartItem,
   CartProfile,
@@ -39,6 +40,29 @@ import {
   VisitorEntry,
   WebsiteSettings,
 } from './types';
+import { isSupabaseConfigured, supabase } from './lib/supabase';
+import {
+  bannerToRow,
+  complaintToRow,
+  couponToRow,
+  dispatchOrderAndMobileNotification,
+  fetchInitialSupabaseStore,
+  notificationToRow,
+  orderToRow,
+  productToRow,
+  rowToBanner,
+  rowToComplaint,
+  rowToCoupon,
+  rowToOrder,
+  rowToProduct,
+  rowToUser,
+  subscribeRealtimeStore,
+  syncSingleUpsert,
+  syncTableReplaceAll,
+  syncWebsiteSettings,
+  userToRow,
+  visitorToRow,
+} from './lib/storeSync';
 
 const STORAGE_CART_KEY = 'aponjon_cart_v1';
 const STORAGE_ORDERS_KEY = 'aponjon_orders_v1';
@@ -52,6 +76,38 @@ const STORAGE_MANAGED_USERS_KEY = 'aponjon_managed_users_v1';
 const STORAGE_SETTINGS_KEY = 'aponjon_website_settings_v1';
 const STORAGE_VISITORS_KEY = 'aponjon_visitors_v1';
 const STORAGE_COMPLAINTS_KEY = 'aponjon_complaints_v1';
+const STORAGE_NOTIFICATIONS_KEY = 'aponjon_admin_notifications_v1';
+
+function isAdminPathActive(): boolean {
+  if (typeof window === 'undefined') return false;
+  return (
+    window.location.pathname === '/admin' ||
+    window.location.pathname.startsWith('/admin/') ||
+    window.location.hash === '#admin' ||
+    window.location.search.includes('admin=1')
+  );
+}
+
+function playAdminAlertChime() {
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(1174.66, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.36);
+  } catch {
+    // Ignore audio context restriction
+  }
+}
 
 const PAGE_ORDER: NavTab[] = ['home', 'shop', 'cart', 'login'];
 const PAGE_LABELS: Record<NavTab, string> = {
@@ -79,10 +135,8 @@ function writeStorage<T>(key: string, value: T) {
 }
 
 export default function App() {
-  const [adminMode, setAdminMode] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return window.location.hash === '#admin' || window.location.search.includes('admin=1');
-  });
+  const [adminMode, setAdminMode] = useState<boolean>(() => isAdminPathActive());
+  const [supabaseConnected, setSupabaseConnected] = useState<boolean>(isSupabaseConfigured);
 
   const [products, setProducts] = useState<Product[]>(() =>
     readStorage(STORAGE_PRODUCTS_KEY, PRODUCTS)
@@ -119,6 +173,9 @@ export default function App() {
   );
   const [complaints, setComplaints] = useState<ComplaintTicket[]>(() =>
     readStorage(STORAGE_COMPLAINTS_KEY, [])
+  );
+  const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>(() =>
+    readStorage(STORAGE_NOTIFICATIONS_KEY, [])
   );
 
   const [noticeVisible, setNoticeVisible] = useState(true);
@@ -168,6 +225,7 @@ export default function App() {
   useEffect(() => writeStorage(STORAGE_SETTINGS_KEY, websiteSettings), [websiteSettings]);
   useEffect(() => writeStorage(STORAGE_VISITORS_KEY, visitors), [visitors]);
   useEffect(() => writeStorage(STORAGE_COMPLAINTS_KEY, complaints), [complaints]);
+  useEffect(() => writeStorage(STORAGE_NOTIFICATIONS_KEY, adminNotifications), [adminNotifications]);
   useEffect(() => writeStorage(STORAGE_CART_KEY, cart), [cart]);
   useEffect(() => writeStorage(STORAGE_ORDERS_KEY, orders), [orders]);
 
@@ -187,6 +245,117 @@ export default function App() {
     }
   }, [user]);
 
+  // Supabase initial hydration & live realtime sync between Admin Panel and User Panel
+  useEffect(() => {
+    let active = true;
+    fetchInitialSupabaseStore().then((snap) => {
+      if (!active || !snap) return;
+      if (snap.products) setProducts(snap.products);
+      if (snap.categories) setCategories(snap.categories);
+      if (snap.banners) setBanners(snap.banners);
+      if (snap.coupons) setCoupons(snap.coupons);
+      if (snap.orders) setOrders(snap.orders);
+      if (snap.users) setManagedUsers(snap.users);
+      if (snap.complaints) setComplaints(snap.complaints);
+      if (snap.visitors) setVisitors(snap.visitors);
+      if (snap.settings) setWebsiteSettings(snap.settings);
+      if (snap.notifications) setAdminNotifications(snap.notifications);
+    });
+
+    const unsubscribe = subscribeRealtimeStore({
+      onStatusChange: (connected) => {
+        if (active) setSupabaseConnected(connected || isSupabaseConfigured);
+      },
+      onProductsChange: async () => {
+        if (!supabase) return;
+        const { data } = await supabase
+          .from('products')
+          .select('*')
+          .order('sort_order', { ascending: true });
+        if (active && data && data.length > 0) {
+          setProducts(data.map((r) => rowToProduct(r as Record<string, unknown>)));
+        }
+      },
+      onCategoriesChange: async () => {
+        if (!supabase) return;
+        const { data } = await supabase
+          .from('categories')
+          .select('*')
+          .order('sort_order', { ascending: true });
+        if (active && data && data.length > 0) {
+          setCategories(data.map((r) => String((r as Record<string, unknown>).name)));
+        }
+      },
+      onBannersChange: async () => {
+        if (!supabase) return;
+        const { data } = await supabase
+          .from('banners')
+          .select('*')
+          .order('sort_order', { ascending: true });
+        if (active && data) {
+          setBanners(data.map((r) => rowToBanner(r as Record<string, unknown>)));
+        }
+      },
+      onCouponsChange: async () => {
+        if (!supabase) return;
+        const { data } = await supabase.from('coupons').select('*');
+        if (active && data) {
+          setCoupons(data.map((r) => rowToCoupon(r as Record<string, unknown>)));
+        }
+      },
+      onOrdersChange: async () => {
+        if (!supabase) return;
+        const { data } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (active && data) {
+          setOrders(data.map((r) => rowToOrder(r as Record<string, unknown>)));
+        }
+      },
+      onUsersChange: async () => {
+        if (!supabase) return;
+        const { data } = await supabase
+          .from('managed_users')
+          .select('*')
+          .order('joined_at', { ascending: false });
+        if (active && data) {
+          setManagedUsers(data.map((r) => rowToUser(r as Record<string, unknown>)));
+        }
+      },
+      onComplaintsChange: async () => {
+        if (!supabase) return;
+        const { data } = await supabase
+          .from('complaints')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (active && data) {
+          setComplaints(data.map((r) => rowToComplaint(r as Record<string, unknown>)));
+        }
+      },
+      onSettingsChange: (nextSettings) => {
+        if (active) setWebsiteSettings(nextSettings);
+      },
+      onNewNotification: (notif) => {
+        if (!active) return;
+        setAdminNotifications((prev) =>
+          prev.some((p) => p.id === notif.id) ? prev : [notif, ...prev].slice(0, 60)
+        );
+        if (isAdminPathActive()) {
+          playAdminAlertChime();
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(notif.title, { body: notif.message });
+          }
+        }
+      },
+    });
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, []);
+
   // Track real page visit once per page load
   useEffect(() => {
     if (visitLoggedRef.current) return;
@@ -198,19 +367,22 @@ export default function App() {
       timestamp: now.toISOString(),
       dateKey: now.toISOString().slice(0, 10),
       device: isMobile ? 'মোবাইল' : 'ডেস্কটপ',
-      page: window.location.hash === '#admin' ? 'এডমিন প্যানেল' : 'হোম স্টোর',
+      page: isAdminPathActive() ? 'এডমিন প্যানেল' : 'হোম স্টোর',
       referrer: document.referrer ? new URL(document.referrer).hostname : 'সরাসরি ভিজিট',
     };
     setVisitors((prev) => [entry, ...prev].slice(0, 300));
+    syncSingleUpsert('visitors', visitorToRow(entry), 'id');
   }, []);
 
-  // Listen to hash changes (#admin)
+  // Listen to URL changes (/admin or #admin)
   useEffect(() => {
-    const onHash = () => {
-      if (window.location.hash === '#admin') setAdminMode(true);
+    const onNav = () => setAdminMode(isAdminPathActive());
+    window.addEventListener('hashchange', onNav);
+    window.addEventListener('popstate', onNav);
+    return () => {
+      window.removeEventListener('hashchange', onNav);
+      window.removeEventListener('popstate', onNav);
     };
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
   // Live purchase toast interval
@@ -232,22 +404,21 @@ export default function App() {
     setManagedUsers((prev) => {
       const idx = prev.findIndex((u) => u.identifier === identifier);
       if (idx >= 0) {
-        return prev.map((u, i) =>
-          i === idx ? { ...u, name, address: address || u.address } : u
-        );
+        const updatedUser = { ...prev[idx], name, address: address || prev[idx].address };
+        syncSingleUpsert('managed_users', userToRow(updatedUser), 'id');
+        return prev.map((u, i) => (i === idx ? updatedUser : u));
       }
-      return [
-        {
-          id: `usr-${Date.now()}`,
-          name,
-          identifier,
-          address,
-          joinedAt: new Date().toISOString(),
-          status: 'সক্রিয়',
-          source,
-        },
-        ...prev,
-      ];
+      const created: ManagedUser = {
+        id: `usr-${Date.now()}`,
+        name,
+        identifier,
+        address,
+        joinedAt: new Date().toISOString(),
+        status: 'সক্রিয়',
+        source,
+      };
+      syncSingleUpsert('managed_users', userToRow(created), 'id');
+      return [created, ...prev];
     });
   };
 
@@ -320,17 +491,22 @@ export default function App() {
     navigateToTab('shop');
   };
 
-  const handleAddToCart = (product: Product, quantity = 1) => {
+  const handleAddToCart = (product: Product, quantity = 1, selectedColor?: string) => {
+    const chosenColor =
+      selectedColor || (product.colors && product.colors.length > 0 ? product.colors[0] : 'White');
     setCart((prev) => {
-      const existing = prev.find((item) => item.product.id === product.id);
+      const existing = prev.find(
+        (item) =>
+          item.product.id === product.id && (item.selectedColor || 'White') === chosenColor
+      );
       if (existing) {
         return prev.map((item) =>
-          item.product.id === product.id
+          item.product.id === product.id && (item.selectedColor || 'White') === chosenColor
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      return [...prev, { product, quantity }];
+      return [...prev, { product, quantity, selectedColor: chosenColor }];
     });
   };
 
@@ -350,8 +526,10 @@ export default function App() {
     setCart((prev) => prev.filter((item) => item.product.id !== productId));
   };
 
-  const handleOrderNow = (product: Product, quantity = 1) => {
-    setCheckoutItems([{ product, quantity }]);
+  const handleOrderNow = (product: Product, quantity = 1, selectedColor?: string) => {
+    const chosenColor =
+      selectedColor || (product.colors && product.colors.length > 0 ? product.colors[0] : 'White');
+    setCheckoutItems([{ product, quantity, selectedColor: chosenColor }]);
     setCheckoutDirect(true);
     setCheckoutOpen(true);
   };
@@ -366,7 +544,56 @@ export default function App() {
 
   const handleOrderCreated = (order: OrderRecord, clearedFromCart: boolean) => {
     setOrders((prev) => [order, ...prev]);
+    syncSingleUpsert('orders', orderToRow(order), 'id');
     registerCustomerRecord(order.customerName, order.phone, 'অর্ডার', order.address);
+
+    // Update product sold & stock counts in real time
+    setProducts((prev) => {
+      const nextProducts = prev.map((p) => {
+        const boughtQty = order.items
+          .filter((it) => it.productId === p.id)
+          .reduce((s, it) => s + it.quantity, 0);
+        if (boughtQty <= 0) return p;
+        return {
+          ...p,
+          sold: p.sold + boughtQty,
+          left: Math.max(0, p.left - boughtQty),
+        };
+      });
+      syncTableReplaceAll(
+        'products',
+        nextProducts.map((p, idx) => productToRow(p, idx)),
+        'id',
+        websiteSettings.adminPin
+      );
+      return nextProducts;
+    });
+
+    // Dispatch instant Admin Panel + Mobile Notification
+    const trxMatch = order.paymentDetails?.match(/TrxID:\s*([A-Z0-9]+)/i);
+    const notif: AdminNotification = {
+      id: `notif-${Date.now()}`,
+      type: order.paymentVerified ? 'gopay' : 'order',
+      title: order.paymentVerified
+        ? `GoPay পেমেন্ট ভেরিফাইড (#${order.id})`
+        : `নতুন অর্ডার এসেছে (#${order.id})`,
+      message: `${order.customerName} (${order.phone}) · ৳${order.total.toLocaleString('en-US')}${
+        order.paymentDetails ? ` · ${order.paymentDetails}` : ''
+      }`,
+      orderId: order.id,
+      amount: order.total,
+      trxId: trxMatch ? trxMatch[1] : undefined,
+      createdAt: new Date().toISOString(),
+      read: false,
+    };
+
+    setAdminNotifications((prev) => [notif, ...prev].slice(0, 60));
+    dispatchOrderAndMobileNotification({
+      notification: notif,
+      mobileNotifyEnabled: websiteSettings.mobileNotifyEnabled,
+      mobileNotifyTopic: websiteSettings.mobileNotifyTopic,
+    });
+
     if (clearedFromCart) {
       setCart([]);
     }
@@ -377,16 +604,8 @@ export default function App() {
     setTrackOpen(true);
   };
 
-  const openAdminPanel = () => {
-    window.location.hash = 'admin';
-    setAdminMode(true);
-    window.scrollTo({ top: 0 });
-  };
-
   const exitAdminPanel = () => {
-    if (window.location.hash === '#admin') {
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
-    }
+    window.history.replaceState(null, '', '/');
     setAdminMode(false);
     window.scrollTo({ top: 0 });
   };
@@ -415,15 +634,41 @@ export default function App() {
   const handleImportBackup = (jsonText: string): boolean => {
     try {
       const parsed = JSON.parse(jsonText);
-      if (Array.isArray(parsed.products)) setProducts(parsed.products);
-      if (Array.isArray(parsed.categories)) setCategories(parsed.categories);
-      if (Array.isArray(parsed.banners)) setBanners(parsed.banners);
+      if (Array.isArray(parsed.products)) {
+        setProducts(parsed.products);
+        syncTableReplaceAll(
+          'products',
+          parsed.products.map((p: Product, idx: number) => productToRow(p, idx)),
+          'id',
+          websiteSettings.adminPin
+        );
+      }
+      if (Array.isArray(parsed.categories)) {
+        setCategories(parsed.categories);
+        syncTableReplaceAll(
+          'categories',
+          parsed.categories.map((name: string, idx: number) => ({ name, sort_order: idx })),
+          'name',
+          websiteSettings.adminPin
+        );
+      }
+      if (Array.isArray(parsed.banners)) {
+        setBanners(parsed.banners);
+        syncTableReplaceAll(
+          'banners',
+          parsed.banners.map((b: BannerSlide, idx: number) => bannerToRow(b, idx)),
+          'id',
+          websiteSettings.adminPin
+        );
+      }
       if (Array.isArray(parsed.coupons)) setCoupons(parsed.coupons);
       if (Array.isArray(parsed.orders)) setOrders(parsed.orders);
       if (Array.isArray(parsed.managedUsers)) setManagedUsers(parsed.managedUsers);
       if (Array.isArray(parsed.complaints)) setComplaints(parsed.complaints);
       if (parsed.websiteSettings && typeof parsed.websiteSettings === 'object') {
-        setWebsiteSettings({ ...DEFAULT_WEBSITE_SETTINGS, ...parsed.websiteSettings });
+        const nextSet = { ...DEFAULT_WEBSITE_SETTINGS, ...parsed.websiteSettings };
+        setWebsiteSettings(nextSet);
+        syncWebsiteSettings(nextSet, websiteSettings.adminPin);
       }
       return true;
     } catch {
@@ -435,47 +680,138 @@ export default function App() {
     return (
       <AdminPanel
         products={products}
-        onSaveProducts={setProducts}
+        onSaveProducts={(next) => {
+          setProducts(next);
+          syncTableReplaceAll(
+            'products',
+            next.map((p, idx) => productToRow(p, idx)),
+            'id',
+            websiteSettings.adminPin
+          );
+        }}
         categories={categories}
-        onSaveCategories={setCategories}
+        onSaveCategories={(next) => {
+          setCategories(next);
+          syncTableReplaceAll(
+            'categories',
+            next.map((name, idx) => ({ name, sort_order: idx })),
+            'name',
+            websiteSettings.adminPin
+          );
+        }}
         orders={orders}
-        onUpdateOrderStatus={(orderId, status) =>
-          setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)))
-        }
-        onDeleteOrder={(orderId) =>
-          setOrders((prev) => prev.filter((o) => o.id !== orderId))
-        }
+        onUpdateOrderStatus={(orderId, status) => {
+          setOrders((prev) =>
+            prev.map((o) => {
+              if (o.id !== orderId) return o;
+              const updated = { ...o, status };
+              syncSingleUpsert('orders', orderToRow(updated), 'id', websiteSettings.adminPin);
+              return updated;
+            })
+          );
+        }}
+        onDeleteOrder={(orderId) => {
+          setOrders((prev) => prev.filter((o) => o.id !== orderId));
+          if (supabase) {
+            supabase.from('orders').delete().eq('id', orderId);
+          }
+        }}
         coupons={coupons}
-        onSaveCoupons={setCoupons}
+        onSaveCoupons={(next) => {
+          setCoupons(next);
+          syncTableReplaceAll(
+            'coupons',
+            next.map((c) => couponToRow(c)),
+            'id',
+            websiteSettings.adminPin
+          );
+        }}
         users={managedUsers}
-        onSaveUsers={setManagedUsers}
+        onSaveUsers={(next) => {
+          setManagedUsers(next);
+          syncTableReplaceAll(
+            'managed_users',
+            next.map((u) => userToRow(u)),
+            'id',
+            websiteSettings.adminPin
+          );
+        }}
         banners={banners}
-        onSaveBanners={setBanners}
+        onSaveBanners={(next) => {
+          setBanners(next);
+          syncTableReplaceAll(
+            'banners',
+            next.map((b, idx) => bannerToRow(b, idx)),
+            'id',
+            websiteSettings.adminPin
+          );
+        }}
         settings={websiteSettings}
-        onSaveSettings={setWebsiteSettings}
-        onResetSettings={() =>
-          setWebsiteSettings({
+        onSaveSettings={(next) => {
+          setWebsiteSettings(next);
+          syncWebsiteSettings(next, next.adminPin);
+        }}
+        onResetSettings={() => {
+          const resetVal = {
             ...DEFAULT_WEBSITE_SETTINGS,
             flashSaleEndAt: new Date(
               Date.now() + (351 * 86400 + 3 * 3600 + 43 * 60 + 40) * 1000
             ).toISOString(),
-          })
-        }
+          };
+          setWebsiteSettings(resetVal);
+          syncWebsiteSettings(resetVal, resetVal.adminPin);
+        }}
         visitors={visitors}
         onClearVisitors={() => setVisitors([])}
         complaints={complaints}
         onToggleComplaintStatus={(id) =>
           setComplaints((prev) =>
-            prev.map((c) =>
-              c.id === id
-                ? { ...c, status: c.status === 'নতুন' ? 'সমাধান হয়েছে' : 'নতুন' }
-                : c
-            )
+            prev.map((c) => {
+              if (c.id !== id) return c;
+              const nextStatus: ComplaintTicket['status'] =
+                c.status === 'নতুন' ? 'সমাধান হয়েছে' : 'নতুন';
+              const updated = { ...c, status: nextStatus };
+              syncSingleUpsert(
+                'complaints',
+                complaintToRow(updated),
+                'id',
+                websiteSettings.adminPin
+              );
+              return updated;
+            })
           )
         }
         onExportBackup={handleExportBackup}
         onImportBackup={handleImportBackup}
         onExitAdmin={exitAdminPanel}
+        notifications={adminNotifications}
+        onMarkNotificationsRead={() => {
+          setAdminNotifications((prev) => {
+            const updated = prev.map((n) => ({ ...n, read: true }));
+            updated.forEach((n) => syncSingleUpsert('admin_notifications', notificationToRow(n), 'id'));
+            return updated;
+          });
+        }}
+        supabaseConnected={supabaseConnected}
+        onTestMobileNotification={() => {
+          const testNotif: AdminNotification = {
+            id: `notif-test-${Date.now()}`,
+            type: 'gopay',
+            title: 'টেস্ট অর্ডার ও GoPay অ্যালার্ট',
+            message: 'আপনজন ই-শপ থেকে লাইভ মোবাইল নোটিফিকেশন সফলভাবে কাজ করছে!',
+            amount: 1020,
+            trxId: 'TEST9988',
+            createdAt: new Date().toISOString(),
+            read: false,
+          };
+          setAdminNotifications((prev) => [testNotif, ...prev]);
+          dispatchOrderAndMobileNotification({
+            notification: testNotif,
+            mobileNotifyEnabled: websiteSettings.mobileNotifyEnabled,
+            mobileNotifyTopic: websiteSettings.mobileNotifyTopic,
+          });
+          playAdminAlertChime();
+        }}
       />
     );
   }
@@ -740,14 +1076,6 @@ export default function App() {
           >
             কাস্টমার অ্যাকাউন্ট
           </button>
-          <span aria-hidden="true">·</span>
-          <button
-            type="button"
-            onClick={openAdminPanel}
-            className="font-semibold text-[#b87e06] hover:underline"
-          >
-            এডমিন প্যানেল
-          </button>
         </div>
       </footer>
 
@@ -833,7 +1161,6 @@ export default function App() {
         onOpenComplaint={() => setComplaintOpen(true)}
         onOpenAccount={() => navigateToTab('login')}
         onOpenAbout={() => setAboutOpen(true)}
-        onOpenAdmin={openAdminPanel}
         categories={categories}
         facebookUrl={websiteSettings.facebookUrl}
       />
@@ -846,6 +1173,8 @@ export default function App() {
 
       <ProductDetailModal
         product={detailProduct}
+        dhakaDeliveryFee={websiteSettings.dhakaDeliveryFee}
+        outsideDeliveryFee={websiteSettings.outsideDeliveryFee}
         onClose={() => setDetailProduct(null)}
         onAddToCart={handleAddToCart}
         onOrderNow={handleOrderNow}
@@ -887,7 +1216,10 @@ export default function App() {
       <ComplaintModal
         open={complaintOpen}
         onClose={() => setComplaintOpen(false)}
-        onSubmitComplaint={(ticket) => setComplaints((prev) => [ticket, ...prev])}
+        onSubmitComplaint={(ticket) => {
+          setComplaints((prev) => [ticket, ...prev]);
+          syncSingleUpsert('complaints', complaintToRow(ticket), 'id');
+        }}
       />
     </div>
   );

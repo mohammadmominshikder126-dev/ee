@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Lock, LogOut, Package, User } from 'lucide-react';
+import { Eye, EyeOff, Lock, LogOut, Package, Smartphone, User } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { CustomerUser, OrderRecord } from '../types';
 
@@ -19,28 +19,81 @@ export function LoginView({
   onTrackOrder,
   onBackToShop,
 }: LoginViewProps) {
-  const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState('');
-  const [identifier, setIdentifier] = useState('');
+  const [phone10, setPhone10] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
 
-  const handleSubmit = (e: FormEvent) => {
+  const handlePhoneChange = (raw: string) => {
+    let digits = raw.replace(/\D/g, '');
+    if (digits.startsWith('880') && digits.length > 10) {
+      digits = digits.slice(3);
+    }
+    if (digits.startsWith('0') && digits.length > 1) {
+      digits = digits.slice(1);
+    }
+    setPhone10(digits.slice(0, 10));
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!identifier.trim() || !password.trim()) {
-      setStatusMessage('দয়া করে আপনার মোবাইল নম্বর/ইমেইল ও পাসওয়ার্ড লিখুন।');
+    const digits = phone10.replace(/\D/g, '');
+    if (!/^1[3-9]\d{8}$/.test(digits)) {
+      setStatusMessage('আপনার সঠিক ১০ সংখ্যার বাংলাদেশি মোবাইল নম্বরটি দিন (যেমন: 17XXXXXXXX)।');
       return;
     }
-    if (isRegister && !name.trim()) {
-      setStatusMessage('অ্যাকাউন্ট খুলতে আপনার পুরো নাম লিখুন।');
+    if (password.length < 4) {
+      setStatusMessage('পাসওয়ার্ড কমপক্ষে ৪ অক্ষরের হতে হবে।');
       return;
     }
+    if (password !== confirmPassword) {
+      setStatusMessage('পাসওয়ার্ড এবং কনফার্ম পাসওয়ার্ড মেলেনি।');
+      return;
+    }
+
     setStatusMessage('');
+    setSubmitting(true);
+    const formattedPhone = `0${digits}`;
+    const displayName = name.trim() || `ক্রেতা (${formattedPhone})`;
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone10: digits,
+          password,
+          confirmPassword,
+          name: name.trim(),
+        }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { user?: CustomerUser };
+        if (data.user) {
+          onLogin(data.user);
+          setSubmitting(false);
+          return;
+        }
+      } else if (res.status !== 404 && res.status !== 405) {
+        const errData = (await res.json().catch(() => ({}))) as { error?: string };
+        if (errData.error) {
+          setStatusMessage(errData.error);
+          setSubmitting(false);
+          return;
+        }
+      }
+    } catch {
+      // Static hosting fallback (Cloudflare Workers)
+    }
+
+    setSubmitting(false);
     onLogin({
-      name: isRegister ? name.trim() : identifier.trim().split('@')[0] || 'আপনজন ই-শপ ক্রেতা',
-      identifier: identifier.trim(),
+      name: displayName,
+      identifier: formattedPhone,
       provider: 'credentials',
     });
   };
@@ -55,13 +108,13 @@ export function LoginView({
             </div>
             <div>
               <h2 className="font-display text-xl font-bold text-[#141518]">{user.name}</h2>
-              <p className="text-xs text-neutral-500">{user.identifier}</p>
+              <p className="text-xs text-neutral-500 font-mono-num">{user.identifier}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onLogout}
-            className="min-h-[40px] px-3.5 rounded-xl border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 flex items-center gap-1.5"
+            className="min-h-[40px] px-3.5 rounded-xl border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 flex items-center gap-1.5 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>লগআউট</span>
@@ -79,7 +132,7 @@ export function LoginView({
               <button
                 type="button"
                 onClick={onBackToShop}
-                className="mt-3 px-5 py-2.5 rounded-xl bg-[#141518] text-white text-xs font-bold hover:bg-[#b87e06] transition-colors"
+                className="mt-3 px-5 py-2.5 rounded-xl bg-[#141518] text-white text-xs font-bold hover:bg-[#b87e06] transition-colors cursor-pointer"
               >
                 ফ্ল্যাশ সেল দেখুন
               </button>
@@ -91,7 +144,7 @@ export function LoginView({
                   key={order.id}
                   type="button"
                   onClick={() => onTrackOrder(order.id)}
-                  className="w-full text-left p-3.5 rounded-2xl border border-neutral-200 hover:border-[#c98e0b] transition-colors flex items-center justify-between gap-3"
+                  className="w-full text-left p-3.5 rounded-2xl border border-neutral-200 hover:border-[#c98e0b] transition-colors flex items-center justify-between gap-3 cursor-pointer"
                 >
                   <div>
                     <div className="font-mono-num text-sm font-bold text-[#141518]">
@@ -116,52 +169,60 @@ export function LoginView({
   return (
     <section className="max-w-[460px] mx-auto bg-white rounded-3xl p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
       <div className="text-center mb-6">
-        <h2 className="font-display text-2xl font-bold text-[#141518]">
-          {isRegister ? 'নতুন অ্যাকাউন্ট খুলুন' : 'লগইন করুন'}
-        </h2>
-        <p className="text-sm text-neutral-500 mt-1.5">
-          {isRegister
-            ? 'অর্ডার ট্র্যাক ও দ্রুত চেকআউটের জন্য রেজিস্টার করুন'
-            : 'আপনার অ্যাকাউন্টে প্রবেশ করতে তথ্য দিন'}
+        <div className="w-12 h-12 rounded-2xl bg-[#141518] text-[#f0be4d] mx-auto mb-3 flex items-center justify-center">
+          <Smartphone className="w-6 h-6" />
+        </div>
+        <h2 className="font-display text-2xl font-bold text-[#141518]">মোবাইল নম্বর দিয়ে লগইন</h2>
+        <p className="text-xs sm:text-sm text-neutral-500 mt-1">
+          শুধু বাংলাদেশি ১০ সংখ্যার মোবাইল নম্বর ও পাসওয়ার্ড দিয়ে প্রবেশ করুন
         </p>
       </div>
 
       {statusMessage && (
-        <div className="mb-4 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2.5">
+        <div className="mb-4 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
           {statusMessage}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {isRegister && (
-          <div>
-            <label className="block text-sm font-semibold text-[#141518] mb-1.5">পূর্ণ নাম</label>
-            <div className="flex items-center border border-neutral-300 rounded-xl px-3.5 h-12 focus-within:border-[#c98e0b]">
-              <User className="w-4 h-4 text-neutral-400 mr-2.5 shrink-0" />
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="আপনার পুরো নাম"
-                className="w-full text-sm outline-none bg-transparent"
-              />
-            </div>
-          </div>
-        )}
-
         <div>
-          <label className="block text-sm font-semibold text-[#141518] mb-1.5">
-            মোবাইল নম্বর বা ইমেইল
+          <label className="block text-xs font-semibold text-neutral-600 mb-1">
+            আপনার নাম (ঐচ্ছিক)
           </label>
-          <div className="flex items-center border border-neutral-300 rounded-xl px-3.5 h-12 focus-within:border-[#c98e0b]">
+          <div className="flex items-center border border-neutral-300 rounded-xl px-3.5 h-11 focus-within:border-[#c98e0b]">
             <User className="w-4 h-4 text-neutral-400 mr-2.5 shrink-0" />
             <input
               type="text"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="01XXXXXXXXX অথবা email@example.com"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="আপনার নাম লিখুন"
               className="w-full text-sm outline-none bg-transparent"
             />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-bold text-[#15803d] mb-1">
+            আপনার ১০ সংখ্যার মোবাইল নম্বরটি দিন
+          </label>
+          <div className="flex items-center border border-neutral-300 rounded-xl overflow-hidden h-12 focus-within:border-[#c98e0b]">
+            <span className="h-full px-3 bg-neutral-100 border-r border-neutral-200 text-xs font-bold text-[#141518] flex items-center gap-1 shrink-0 font-mono-num">
+              <span>🇧🇩</span>
+              <span>+880</span>
+            </span>
+            <input
+              type="tel"
+              inputMode="numeric"
+              maxLength={10}
+              required
+              value={phone10}
+              onChange={(e) => handlePhoneChange(e.target.value)}
+              placeholder="1XXXXXXXXX"
+              className="w-full px-3 text-sm font-mono-num font-semibold outline-none bg-transparent tracking-wider"
+            />
+            <span className="pr-3 text-[11px] font-mono-num font-bold text-neutral-400 shrink-0">
+              {phone10.length}/10
+            </span>
           </div>
         </div>
 
@@ -171,6 +232,7 @@ export function LoginView({
             <Lock className="w-4 h-4 text-neutral-400 mr-2.5 shrink-0" />
             <input
               type={showPassword ? 'text' : 'password'}
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="পাসওয়ার্ড দিন"
@@ -180,94 +242,46 @@ export function LoginView({
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
               aria-label={showPassword ? 'পাসওয়ার্ড লুকান' : 'পাসওয়ার্ড দেখুন'}
-              className="text-neutral-400 hover:text-neutral-700 p-1.5"
+              className="text-neutral-400 hover:text-neutral-700 p-1.5 cursor-pointer"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-sm">
-          <label className="flex items-center gap-2 text-neutral-600 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 accent-[#141518] rounded"
-            />
-            <span>মনে রাখুন</span>
+        <div>
+          <label className="block text-sm font-semibold text-[#141518] mb-1.5">
+            কনফার্ম পাসওয়ার্ড
           </label>
-          <button
-            type="button"
-            onClick={() =>
-              setStatusMessage(
-                'পাসওয়ার্ড রিসেট করতে আপনার নিবন্ধিত 01XXXXXXXXX নম্বর দিন অথবা আমাদের অফিশিয়াল ফেসবুক পেজে মেসেজ করুন।'
-              )
-            }
-            className="text-neutral-700 hover:text-[#b87e06] font-medium"
-          >
-            পাসওয়ার্ড ভুলে গেছেন?
-          </button>
+          <div className="flex items-center border border-neutral-300 rounded-xl px-3.5 h-12 focus-within:border-[#c98e0b]">
+            <Lock className="w-4 h-4 text-neutral-400 mr-2.5 shrink-0" />
+            <input
+              type={showConfirmPassword ? 'text' : 'password'}
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="পুনরায় পাসওয়ার্ড লিখুন"
+              className="w-full text-sm outline-none bg-transparent"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword((prev) => !prev)}
+              aria-label={showConfirmPassword ? 'পাসওয়ার্ড লুকান' : 'পাসওয়ার্ড দেখুন'}
+              className="text-neutral-400 hover:text-neutral-700 p-1.5 cursor-pointer"
+            >
+              {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
 
         <button
           type="submit"
-          className="w-full min-h-[48px] rounded-xl bg-[#141518] hover:bg-[#b87e06] text-white font-bold text-sm transition-colors cursor-pointer"
+          disabled={submitting}
+          className="w-full min-h-[48px] rounded-xl bg-[#141518] hover:bg-[#b87e06] disabled:opacity-70 text-white font-bold text-sm transition-colors cursor-pointer"
         >
-          {isRegister ? 'রেজিস্টার করুন' : 'লগইন করুন'}
+          {submitting ? 'লগইন হচ্ছে...' : 'লগইন করুন'}
         </button>
       </form>
-
-      <div className="my-5 flex items-center gap-3 text-xs text-neutral-400">
-        <div className="flex-1 h-px bg-neutral-200" />
-        <span>অথবা</span>
-        <div className="flex-1 h-px bg-neutral-200" />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={() =>
-            onLogin({
-              name: 'গুগল ক্রেতা',
-              identifier: 'google.account@aponjon-eshop.com',
-              provider: 'google',
-            })
-          }
-          className="min-h-[44px] px-3 rounded-xl border border-neutral-200 hover:bg-neutral-50 text-sm font-medium text-[#141518] flex items-center justify-center gap-2 transition-colors whitespace-nowrap"
-        >
-          <span className="font-bold text-[#ea4335]">G</span>
-          <span>গুগল দিয়ে লগইন</span>
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            onLogin({
-              name: 'ফেসবুক ক্রেতা',
-              identifier: 'fb.customer@aponjon-eshop.com',
-              provider: 'facebook',
-            })
-          }
-          className="min-h-[44px] px-3 rounded-xl border border-neutral-200 hover:bg-neutral-50 text-sm font-medium text-[#141518] flex items-center justify-center gap-2 transition-colors whitespace-nowrap"
-        >
-          <span className="font-bold text-[#1877f2]">f</span>
-          <span>ফেসবুক দিয়ে লগইন</span>
-        </button>
-      </div>
-
-      <p className="text-center text-sm text-neutral-600 mt-6">
-        {isRegister ? 'আগে থেকেই অ্যাকাউন্ট আছে?' : 'অ্যাকাউন্ট নেই?'}{' '}
-        <button
-          type="button"
-          onClick={() => {
-            setIsRegister((prev) => !prev);
-            setStatusMessage('');
-          }}
-          className="font-bold text-[#141518] hover:text-[#b87e06]"
-        >
-          {isRegister ? 'লগইন করুন' : 'রেজিস্টার করুন'}
-        </button>
-      </p>
     </section>
   );
 }

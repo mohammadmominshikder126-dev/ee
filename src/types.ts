@@ -12,6 +12,8 @@ export interface Product {
   isFlashBadge?: boolean;
   freeDelivery?: boolean;
   image: string;
+  galleryImages?: string[];
+  colors?: string[];
   sold: number;
   left: number;
   shortDesc: string;
@@ -21,6 +23,7 @@ export interface Product {
 export interface CartItem {
   product: Product;
   quantity: number;
+  selectedColor?: string;
 }
 
 export interface CartProfile {
@@ -40,12 +43,14 @@ export interface OrderRecord {
   zone: 'dhaka' | 'outside';
   paymentMethod: PaymentMethod;
   paymentDetails?: string;
+  paymentVerified?: boolean;
   items: {
     productId: string;
     name: string;
     price: number;
     quantity: number;
     image: string;
+    color?: string;
   }[];
   subtotal: number;
   discount?: number;
@@ -114,6 +119,18 @@ export interface VisitorEntry {
   referrer: string;
 }
 
+export interface AdminNotification {
+  id: string;
+  type: 'order' | 'gopay' | 'complaint';
+  title: string;
+  message: string;
+  orderId?: string;
+  amount?: number;
+  trxId?: string;
+  createdAt: string;
+  read: boolean;
+}
+
 export interface WebsiteSettings {
   brandPrimary: string;
   brandSecondary: string;
@@ -145,4 +162,6 @@ export interface WebsiteSettings {
   aboutHelpline: string;
   adminPinEnabled: boolean;
   adminPin: string;
+  mobileNotifyEnabled?: boolean;
+  mobileNotifyTopic?: string;
 }

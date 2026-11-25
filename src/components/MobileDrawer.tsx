@@ -7,7 +7,6 @@ import {
   Info,
   Lightbulb,
   MessageSquareWarning,
-  Shield,
   Truck,
   User,
   X,
@@ -23,7 +22,6 @@ interface MobileDrawerProps {
   onOpenComplaint: () => void;
   onOpenAccount: () => void;
   onOpenAbout: () => void;
-  onOpenAdmin?: () => void;
   categories?: string[];
   facebookUrl?: string;
 }
@@ -40,7 +38,6 @@ export function MobileDrawer({
   onOpenComplaint,
   onOpenAccount,
   onOpenAbout,
-  onOpenAdmin,
   categories = ['লাইটিং', 'গ্যাজেট', 'সিরামিক আইটেম'],
   facebookUrl = DEFAULT_FACEBOOK_URL,
 }: MobileDrawerProps) {
@@ -175,20 +172,6 @@ export function MobileDrawer({
             <User className="w-5 h-5 text-neutral-500" />
             <span>আমার অ্যাকাউন্ট</span>
           </button>
-
-          {onOpenAdmin && (
-            <button
-              type="button"
-              onClick={() => {
-                onOpenAdmin();
-                onClose();
-              }}
-              className="w-full px-6 py-4 text-left text-[16px] font-semibold text-[#b87e06] hover:bg-[#faf8f3] flex items-center gap-3.5"
-            >
-              <Shield className="w-5 h-5 text-[#b87e06]" />
-              <span>এডমিন প্যানেল</span>
-            </button>
-          )}
         </nav>
       </aside>
     </div>

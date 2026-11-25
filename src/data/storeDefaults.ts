@@ -79,7 +79,28 @@ export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettings = {
   aboutHelpline: '01619502669',
   adminPinEnabled: false,
   adminPin: '1234',
+  mobileNotifyEnabled: true,
+  mobileNotifyTopic: 'aponjon-eshop-orders',
 };
+
+export interface ColorOptionDef {
+  id: string;
+  label: string;
+  hex: string;
+}
+
+export const PRODUCT_COLOR_OPTIONS: ColorOptionDef[] = [
+  { id: 'White', label: 'White (সাদা)', hex: '#ffffff' },
+  { id: 'Navy Blue', label: 'Navy Blue (নেভি ব্লু)', hex: '#1e3a8a' },
+  { id: 'Black', label: 'Black (কালো)', hex: '#141518' },
+  { id: 'Gold', label: 'Gold (সোনালি)', hex: '#d49b1a' },
+  { id: 'Red', label: 'Red (লাল)', hex: '#dc2626' },
+  { id: 'Pink', label: 'Pink (পিংক)', hex: '#ec4899' },
+  { id: 'Green', label: 'Green (সবুজ)', hex: '#16a34a' },
+  { id: 'Sky Blue', label: 'Sky Blue (আকাশি)', hex: '#0ea5e9' },
+];
+
+export const DEFAULT_PRODUCT_COLOR_IDS = PRODUCT_COLOR_OPTIONS.map((c) => c.id);
 
 export function toBengaliDigits(value: number | string): string {
   const digits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];

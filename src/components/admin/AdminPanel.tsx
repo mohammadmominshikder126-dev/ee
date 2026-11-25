@@ -27,16 +27,25 @@ import {
   Settings,
   Shield,
   ShoppingCart,
+  Smartphone,
   Tag,
   Trash2,
   TrendingUp,
   Upload,
   Users,
+  Wifi,
   X,
+  Zap,
 } from 'lucide-react';
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
-import { compressImageFile, toBengaliDigits } from '../../data/storeDefaults';
 import {
+  compressImageFile,
+  DEFAULT_PRODUCT_COLOR_IDS,
+  PRODUCT_COLOR_OPTIONS,
+  toBengaliDigits,
+} from '../../data/storeDefaults';
+import {
+  AdminNotification,
   BannerSlide,
   ComplaintTicket,
   CouponCode,
@@ -85,6 +94,10 @@ interface AdminPanelProps {
   onExportBackup: () => void;
   onImportBackup: (jsonText: string) => boolean;
   onExitAdmin: () => void;
+  notifications?: AdminNotification[];
+  onMarkNotificationsRead?: () => void;
+  supabaseConnected?: boolean;
+  onTestMobileNotification?: () => void;
 }
 
 const ORDER_STATUSES: OrderRecord['status'][] = [
@@ -156,6 +169,10 @@ export function AdminPanel({
   onExportBackup,
   onImportBackup,
   onExitAdmin,
+  notifications = [],
+  onMarkNotificationsRead,
+  supabaseConnected = false,
+  onTestMobileNotification,
 }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -172,7 +189,10 @@ export function AdminPanel({
   const [pOldPrice, setPOldPrice] = useState('');
   const [pDiscount, setPDiscount] = useState('');
   const [pImage, setPImage] = useState('');
+  const [pGallery, setPGallery] = useState('');
+  const [pSold, setPSold] = useState('0');
   const [pLeft, setPLeft] = useState('50');
+  const [pColors, setPColors] = useState<string[]>(DEFAULT_PRODUCT_COLOR_IDS);
   const [pFlash, setPFlash] = useState(true);
   const [pFreeDelivery, setPFreeDelivery] = useState(false);
   const [pDesc, setPDesc] = useState('');
@@ -308,6 +328,7 @@ export function AdminPanel({
   }, [todayKey]);
 
   const unreadAlertsCount =
+    notifications.filter((n) => !n.read).length +
     orders.filter((o) => o.status === 'অর্ডার গ্রহণ').length +
     complaints.filter((c) => c.status === 'নতুন').length;
 
@@ -348,7 +369,10 @@ export function AdminPanel({
     setPOldPrice('');
     setPDiscount('');
     setPImage('');
+    setPGallery('');
+    setPSold('0');
     setPLeft('50');
+    setPColors(DEFAULT_PRODUCT_COLOR_IDS);
     setPFlash(true);
     setPFreeDelivery(false);
     setPDesc('');
@@ -371,6 +395,10 @@ export function AdminPanel({
       .split('\n')
       .map((s) => s.trim())
       .filter(Boolean);
+    const galleryArr = pGallery
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
 
     const newProd: Product = {
       id: editingProductId || `prod-${Date.now()}`,
@@ -382,10 +410,10 @@ export function AdminPanel({
       isFlashBadge: pFlash,
       freeDelivery: pFreeDelivery,
       image: pImage.trim() || '/src/assets/images/product_galaxy_projector_1795539283222.jpg',
-      sold: editingProductId
-        ? products.find((p) => p.id === editingProductId)?.sold ?? 0
-        : 0,
-      left: Math.max(0, Number(pLeft) || 20),
+      galleryImages: galleryArr,
+      colors: pColors.length > 0 ? pColors : DEFAULT_PRODUCT_COLOR_IDS,
+      sold: Math.max(0, Number(pSold) || 0),
+      left: Math.max(0, Number(pLeft) || 0),
       shortDesc: pDesc.trim() || 'প্রিমিয়াম কোয়ালিটি আমদানিকৃত পণ্য।',
       specs:
         specsArr.length > 0
@@ -411,7 +439,12 @@ export function AdminPanel({
     setPOldPrice(String(prod.oldPrice));
     setPDiscount(prod.discountLabel);
     setPImage(prod.image);
+    setPGallery((prod.galleryImages || []).join('\n'));
+    setPSold(String(prod.sold ?? 0));
     setPLeft(String(prod.left));
+    setPColors(
+      prod.colors && prod.colors.length > 0 ? prod.colors : DEFAULT_PRODUCT_COLOR_IDS
+    );
     setPFlash(Boolean(prod.isFlashBadge));
     setPFreeDelivery(Boolean(prod.freeDelivery));
     setPDesc(prod.shortDesc);
@@ -781,6 +814,17 @@ export function AdminPanel({
           </div>
 
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            <span
+              className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                supabaseConnected
+                  ? 'bg-[#dcfce7]/15 text-[#4ade80] border border-[#4ade80]/30'
+                  : 'bg-white/5 text-neutral-400 border border-white/10'
+              }`}
+            >
+              <Wifi className="w-3 h-3" />
+              <span>{supabaseConnected ? 'লাইভ কানেক্টেড' : 'লোকাল মোড'}</span>
+            </span>
+
             <button
               type="button"
               onClick={onExitAdmin}
@@ -793,7 +837,12 @@ export function AdminPanel({
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setNotifOpen((prev) => !prev)}
+                onClick={() => {
+                  setNotifOpen((prev) => !prev);
+                  if (!notifOpen && onMarkNotificationsRead) {
+                    onMarkNotificationsRead();
+                  }
+                }}
                 aria-label="নোটিফিকেশন"
                 className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center relative cursor-pointer"
               >
@@ -806,9 +855,9 @@ export function AdminPanel({
               </button>
 
               {notifOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-white text-[#141518] rounded-2xl shadow-2xl border border-neutral-200 p-3 z-50">
+                <div className="absolute right-0 mt-2 w-80 bg-white text-[#141518] rounded-2xl shadow-2xl border border-neutral-200 p-3 z-50">
                   <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
-                    <span className="text-xs font-bold">নোটিফিকেশন ({unreadAlertsCount})</span>
+                    <span className="text-xs font-bold">লাইভ নোটিফিকেশন ({unreadAlertsCount})</span>
                     <button
                       type="button"
                       onClick={() => setNotifOpen(false)}
@@ -817,7 +866,34 @@ export function AdminPanel({
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="max-h-60 overflow-y-auto divide-y divide-neutral-100 text-xs mt-1">
+                  <div className="max-h-72 overflow-y-auto divide-y divide-neutral-100 text-xs mt-1">
+                    {notifications.slice(0, 6).map((n) => (
+                      <button
+                        key={n.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveTab(n.type === 'complaint' ? 'users' : 'orders');
+                          setNotifOpen(false);
+                        }}
+                        className="w-full text-left py-2 hover:bg-neutral-50 rounded px-1.5"
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span
+                            className={`font-bold ${
+                              n.type === 'gopay' ? 'text-[#E2136E]' : 'text-[#15803d]'
+                            }`}
+                          >
+                            {n.title}
+                          </span>
+                          {n.trxId && (
+                            <span className="font-mono-num text-[10px] bg-[#ecfdf3] text-[#15803d] px-1.5 py-0.5 rounded font-bold">
+                              {n.trxId}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-neutral-600 mt-0.5">{n.message}</div>
+                      </button>
+                    ))}
                     {orders.slice(0, 3).map((o) => (
                       <button
                         key={o.id}
@@ -826,7 +902,7 @@ export function AdminPanel({
                           setActiveTab('orders');
                           setNotifOpen(false);
                         }}
-                        className="w-full text-left py-2 hover:bg-neutral-50 rounded px-1"
+                        className="w-full text-left py-2 hover:bg-neutral-50 rounded px-1.5"
                       >
                         <div className="font-bold">নতুন অর্ডার #{o.id}</div>
                         <div className="text-neutral-500">
@@ -842,13 +918,13 @@ export function AdminPanel({
                           setActiveTab('users');
                           setNotifOpen(false);
                         }}
-                        className="w-full text-left py-2 hover:bg-neutral-50 rounded px-1"
+                        className="w-full text-left py-2 hover:bg-neutral-50 rounded px-1.5"
                       >
                         <div className="font-bold text-amber-700">অভিযোগ #{c.id}</div>
                         <div className="text-neutral-500 truncate">{c.message}</div>
                       </button>
                     ))}
-                    {orders.length === 0 && complaints.length === 0 && (
+                    {notifications.length === 0 && orders.length === 0 && complaints.length === 0 && (
                       <div className="py-4 text-center text-neutral-500">
                         এখনও কোনো নতুন নোটিফিকেশন নেই
                       </div>
@@ -1199,13 +1275,13 @@ export function AdminPanel({
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-2.5">
                   <div>
                     <label className="block text-xs font-bold mb-1">ক্যাটাগরি</label>
                     <select
                       value={pCat}
                       onChange={(e) => setPCat(e.target.value)}
-                      className="w-full h-10 px-3 rounded-xl border border-neutral-300 text-sm outline-none bg-white"
+                      className="w-full h-10 px-2.5 rounded-xl border border-neutral-300 text-xs sm:text-sm outline-none bg-white"
                     >
                       {categories.map((cat) => (
                         <option key={cat} value={cat}>
@@ -1215,14 +1291,63 @@ export function AdminPanel({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold mb-1">স্টক পরিমাণ</label>
+                    <label className="block text-xs font-bold text-[#15803d] mb-1">
+                      কতজন কিনেছে
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={pSold}
+                      onChange={(e) => setPSold(e.target.value)}
+                      className="w-full h-10 px-3 rounded-xl border border-[#86efac] bg-[#f0fdf4] text-sm font-bold text-[#15803d] font-mono-num outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#15803d] mb-1">
+                      স্টক (কয় পিস)
+                    </label>
                     <input
                       type="number"
                       min={0}
                       value={pLeft}
                       onChange={(e) => setPLeft(e.target.value)}
-                      className="w-full h-10 px-3 rounded-xl border border-neutral-300 text-sm font-mono-num outline-none"
+                      className="w-full h-10 px-3 rounded-xl border border-[#86efac] bg-[#f0fdf4] text-sm font-bold text-[#15803d] font-mono-num outline-none"
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold mb-1.5">
+                    কালার অপশনসমূহ (ইউজার অর্ডারের সময় বেছে নিতে পারবে)
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PRODUCT_COLOR_OPTIONS.map((col) => {
+                      const active = pColors.includes(col.id);
+                      return (
+                        <button
+                          key={col.id}
+                          type="button"
+                          onClick={() =>
+                            setPColors((prev) =>
+                              prev.includes(col.id)
+                                ? prev.filter((c) => c !== col.id)
+                                : [...prev, col.id]
+                            )
+                          }
+                          className={`px-2.5 py-1 rounded-xl border text-[11px] font-bold flex items-center gap-1.5 cursor-pointer ${
+                            active
+                              ? 'border-[#16a34a] bg-[#ecfdf3] text-[#15803d]'
+                              : 'border-neutral-200 bg-white text-neutral-500'
+                          }`}
+                        >
+                          <span
+                            className="w-3 h-3 rounded-full border border-neutral-300"
+                            style={{ backgroundColor: col.hex }}
+                          />
+                          <span>{col.id}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1290,6 +1415,19 @@ export function AdminPanel({
                       className="mt-2 h-24 w-24 object-cover rounded-xl border border-neutral-200"
                     />
                   )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold mb-1">
+                    গ্যালারি অতিরিক্ত ছবি (ঐচ্ছিক, প্রতি লাইনে একটি URL)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={pGallery}
+                    onChange={(e) => setPGallery(e.target.value)}
+                    placeholder="একাধিক ছবির লিংক দিন (থাম্বনেইল গ্যালারির জন্য)"
+                    className="w-full p-2.5 rounded-xl border border-neutral-300 text-xs outline-none resize-none"
+                  />
                 </div>
 
                 <div>
@@ -1364,8 +1502,13 @@ export function AdminPanel({
                         />
                         <div className="min-w-0">
                           <div className="text-sm font-bold truncate">{prod.name}</div>
-                          <div className="text-xs text-neutral-500">
-                            {prod.category} · স্টক: {toBengaliDigits(prod.left)}
+                          <div className="inline-flex items-center gap-1.5 bg-[#ecfdf3] text-[#15803d] rounded px-1.5 py-0.5 text-[11px] font-bold font-mono-num mt-0.5">
+                            <span>✓ {prod.sold} জন কিনেছে</span>
+                            <span>·</span>
+                            <span>স্টকে আছে {prod.left} পিস</span>
+                          </div>
+                          <div className="text-[11px] text-neutral-500 mt-0.5">
+                            {prod.category}
                             {prod.freeDelivery ? ' · ফ্রি হোম ডেলিভারি' : ''}
                           </div>
                           <div className="font-mono-num text-xs font-bold text-[#b87e06] mt-0.5">
@@ -1482,11 +1625,20 @@ export function AdminPanel({
                             <span className="font-mono-num text-neutral-600">{order.phone}</span>
                           </div>
                           <div className="text-xs text-neutral-600 mt-0.5">{order.address}</div>
-                          <div className="text-xs text-neutral-500 mt-1">
-                            পেমেন্ট: <strong>{order.paymentMethod.toUpperCase()}</strong>
-                            {order.paymentDetails ? ` (${order.paymentDetails})` : ''} · ডেলিভারি:{' '}
-                            {order.zone === 'dhaka' ? 'ঢাকার ভেতরে' : 'ঢাকার বাইরে'}
-                            {order.couponCode ? ` · কুপন: ${order.couponCode}` : ''}
+                          <div className="text-xs text-neutral-500 mt-1 flex flex-wrap items-center gap-1.5">
+                            <span>
+                              পেমেন্ট: <strong>{order.paymentMethod.toUpperCase()}</strong>
+                            </span>
+                            {order.paymentVerified && (
+                              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-[#ecfdf3] text-[#15803d] font-bold text-[10px]">
+                                <Zap className="w-3 h-3" />
+                                GoPay Verified
+                              </span>
+                            )}
+                            {order.paymentDetails && <span>({order.paymentDetails})</span>}
+                            <span>
+                              · ডেলিভারি: {order.zone === 'dhaka' ? 'ঢাকার ভেতরে' : 'ঢাকার বাইরে'}
+                            </span>
                           </div>
                         </div>
 
@@ -1528,12 +1680,13 @@ export function AdminPanel({
                       </div>
 
                       <div className="mt-3 pt-2.5 border-t border-neutral-100 flex flex-wrap gap-2 text-xs">
-                        {order.items.map((it) => (
+                        {order.items.map((it, idx) => (
                           <span
-                            key={it.productId}
+                            key={`${it.productId}-${idx}`}
                             className="px-2.5 py-1 rounded-lg bg-neutral-100 text-neutral-700 font-medium"
                           >
-                            {it.name} × {it.quantity} (৳{it.price})
+                            {it.name} × {it.quantity}
+                            {it.color ? ` · কালার: ${it.color}` : ''} (৳{it.price})
                           </span>
                         ))}
                       </div>
@@ -2313,6 +2466,95 @@ export function AdminPanel({
                   >
                     টাইমার সেট করুন
                   </button>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-4 border-t border-neutral-100">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-[#15803d]" />
+                    <span className="text-xs font-bold">
+                      তাৎক্ষণিক মোবাইল নোটিফিকেশন ও Supabase রিয়েল-টাইম
+                    </span>
+                  </div>
+                  <span
+                    className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                      supabaseConnected
+                        ? 'bg-[#ecfdf3] text-[#15803d]'
+                        : 'bg-amber-50 text-amber-700'
+                    }`}
+                  >
+                    {supabaseConnected
+                      ? 'Supabase লাইভ রিয়েল-টাইম সংযুক্ত'
+                      : 'ENV (VITE_SUPABASE_URL / ANON KEY) সেট করুন'}
+                  </span>
+                </div>
+
+                <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-3.5 space-y-3 text-xs">
+                  <label className="flex items-center gap-2 font-semibold cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={draftSettings.mobileNotifyEnabled !== false}
+                      onChange={(e) =>
+                        setDraftSettings({
+                          ...draftSettings,
+                          mobileNotifyEnabled: e.target.checked,
+                        })
+                      }
+                      className="w-4 h-4 accent-[#15803d]"
+                    />
+                    <span>অর্ডার বা GoPay পেমেন্ট হলেই সাথে সাথে মোবাইলে নোটিফিকেশন পাঠান</span>
+                  </label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 items-end">
+                    <div>
+                      <label className="block text-[11px] font-bold text-neutral-600 mb-1">
+                        মোবাইল পুশ টপিক (ntfy.sh অ্যাপে একই নাম সাবস্ক্রাইব করুন)
+                      </label>
+                      <input
+                        type="text"
+                        value={draftSettings.mobileNotifyTopic || ''}
+                        onChange={(e) =>
+                          setDraftSettings({
+                            ...draftSettings,
+                            mobileNotifyTopic: e.target.value,
+                          })
+                        }
+                        placeholder="aponjon-eshop-orders"
+                        className="w-full h-10 px-3 rounded-xl border border-neutral-300 bg-white text-xs font-mono-num"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if ('Notification' in window) {
+                            const perm = await Notification.requestPermission();
+                            showToast(
+                              perm === 'granted'
+                                ? 'ব্রাউজার লাইভ নোটিফিকেশন চালু হয়েছে!'
+                                : 'ব্রাউজার নোটিফিকেশন অনুমতি দেওয়া হয়নি।'
+                            );
+                          }
+                        }}
+                        className="h-10 px-3 rounded-xl border border-neutral-300 bg-white hover:bg-neutral-100 text-xs font-bold cursor-pointer"
+                      >
+                        ব্রাউজার অ্যালার্ট চালু
+                      </button>
+                      {onTestMobileNotification && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onTestMobileNotification();
+                            showToast('টেস্ট মোবাইল নোটিফিকেশন পাঠানো হয়েছে!');
+                          }}
+                          className="h-10 px-3 rounded-xl bg-[#15803d] hover:bg-[#166534] text-white text-xs font-bold cursor-pointer"
+                        >
+                          টেস্ট নোটিফিকেশন পাঠান
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 

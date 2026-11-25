@@ -209,9 +209,9 @@ export function CartDrawer({
             </div>
           ) : (
             <div className="space-y-3">
-              {items.map(({ product, quantity }) => (
+              {items.map(({ product, quantity, selectedColor }) => (
                 <div
-                  key={product.id}
+                  key={`${product.id}-${selectedColor || 'default'}`}
                   className="flex gap-3.5 p-3 rounded-2xl border border-[#ebe6da] bg-[#faf9f6]"
                 >
                   <img
@@ -222,9 +222,16 @@ export function CartDrawer({
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <h4 className="text-sm font-semibold text-[#141518] truncate">
-                        {product.name}
-                      </h4>
+                      <div className="min-w-0">
+                        <h4 className="text-sm font-semibold text-[#141518] truncate">
+                          {product.name}
+                        </h4>
+                        {selectedColor && (
+                          <span className="inline-block mt-0.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ecfdf3] text-[#15803d]">
+                            কালার: {selectedColor}
+                          </span>
+                        )}
+                      </div>
                       <button
                         type="button"
                         onClick={() => onRemoveItem(product.id)}
