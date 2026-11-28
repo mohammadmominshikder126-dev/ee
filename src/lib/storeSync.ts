@@ -288,7 +288,8 @@ async function tryApiSync(
       },
       body: JSON.stringify({ table, action, rows, sourceClientId: CLIENT_ID }),
     });
-    if (res.ok) {
+    const contentType = res.headers.get('content-type') || '';
+    if (res.ok && contentType.includes('application/json')) {
       const data = (await res.json()) as { synced?: boolean };
       return Boolean(data.synced);
     }
@@ -392,7 +393,11 @@ export async function dispatchOrderAndMobileNotification(params: {
         mobileNotifyTopic,
       }),
     });
-    if (res.ok) serverSent = true;
+    const contentType = res.headers.get('content-type') || '';
+    if (res.ok && contentType.includes('application/json')) {
+      const data = (await res.json()) as { ok?: boolean };
+      if (data.ok) serverSent = true;
+    }
   } catch {
     // Static deploy fallback
   }
@@ -436,7 +441,8 @@ export interface InitialSupabaseSnapshot {
 export async function fetchPixelConfig(): Promise<string> {
   try {
     const res = await fetch('/api/pixel-config', { cache: 'no-store' });
-    if (!res.ok) return '';
+    const contentType = res.headers.get('content-type') || '';
+    if (!res.ok || !contentType.includes('application/json')) return '';
     const data = (await res.json()) as { pixelId?: string };
     return String(data.pixelId || '').replace(/\D/g, '').trim();
   } catch {
@@ -447,7 +453,8 @@ export async function fetchPixelConfig(): Promise<string> {
 export async function fetchServerStore(): Promise<InitialSupabaseSnapshot | null> {
   try {
     const res = await fetch('/api/store', { cache: 'no-store' });
-    if (!res.ok) return null;
+    const contentType = res.headers.get('content-type') || '';
+    if (!res.ok || !contentType.includes('application/json')) return null;
     const payload = (await res.json()) as {
       initialized?: boolean;
       metaPixelId?: string;
@@ -667,34 +674,47 @@ export function subscribeServerRealtime(callbacks: ServerRealtimeCallbacks): () 
     }
   };
 
+  let disposed = false;
   let eventSource: EventSource | null = null;
+
   if (typeof EventSource !== 'undefined') {
-    eventSource = new EventSource('/api/store/stream');
-    eventSource.addEventListener('connected', () => {
-      callbacks.onStatusChange?.(true);
-    });
-    eventSource.onopen = () => {
-      callbacks.onStatusChange?.(true);
-    };
-    eventSource.onerror = () => {
-      callbacks.onStatusChange?.(false);
-    };
-    eventSource.addEventListener('store_update', (evt) => {
-      try {
-        const msg = JSON.parse((evt as MessageEvent).data) as {
-          table?: string;
-          action?: string;
-          rows?: Record<string, unknown>[];
-          sourceClientId?: string;
+    fetch('/api/health', { cache: 'no-store' })
+      .then(async (res) => {
+        const contentType = res.headers.get('content-type') || '';
+        if (!res.ok || !contentType.includes('application/json') || disposed) return;
+        const health = (await res.json()) as { realtimeSse?: boolean };
+        if (!health.realtimeSse || disposed) return;
+
+        eventSource = new EventSource('/api/store/stream');
+        eventSource.addEventListener('connected', () => {
+          callbacks.onStatusChange?.(true);
+        });
+        eventSource.onopen = () => {
+          callbacks.onStatusChange?.(true);
         };
-        if (msg.sourceClientId && msg.sourceClientId === CLIENT_ID) return;
-        if (msg.table && Array.isArray(msg.rows)) {
-          applyTableRows(msg.table, msg.rows);
-        }
-      } catch {
-        // Ignore malformed SSE payload
-      }
-    });
+        eventSource.onerror = () => {
+          callbacks.onStatusChange?.(false);
+        };
+        eventSource.addEventListener('store_update', (evt) => {
+          try {
+            const msg = JSON.parse((evt as MessageEvent).data) as {
+              table?: string;
+              action?: string;
+              rows?: Record<string, unknown>[];
+              sourceClientId?: string;
+            };
+            if (msg.sourceClientId && msg.sourceClientId === CLIENT_ID) return;
+            if (msg.table && Array.isArray(msg.rows)) {
+              applyTableRows(msg.table, msg.rows);
+            }
+          } catch {
+            // Ignore malformed SSE payload
+          }
+        });
+      })
+      .catch(() => {
+        callbacks.onStatusChange?.(false);
+      });
   }
 
   const channel = getBroadcastChannel();
@@ -729,6 +749,7 @@ export function subscribeServerRealtime(callbacks: ServerRealtimeCallbacks): () 
   channel?.addEventListener('message', handleChannelMessage);
 
   return () => {
+    disposed = true;
     eventSource?.close();
     channel?.removeEventListener('message', handleChannelMessage);
   };

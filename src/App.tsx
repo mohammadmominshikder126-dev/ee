@@ -463,8 +463,41 @@ export default function App() {
       },
     });
 
+    const refreshStoreOnResume = () => {
+      if (document.visibilityState === 'hidden') return;
+      fetchServerStore().then((snap) => {
+        if (!active || !snap || !snap.initialized) return;
+        if (snap.products) setProducts(snap.products);
+        if (snap.categories && snap.categories.length > 0) setCategories(snap.categories);
+        if (snap.banners) setBanners(snap.banners);
+        if (snap.coupons) setCoupons(snap.coupons);
+        if (snap.orders) setOrders(snap.orders);
+        if (snap.users) setManagedUsers(snap.users);
+        if (snap.complaints) setComplaints(snap.complaints);
+        if (snap.settings) setWebsiteSettings(snap.settings);
+        if (snap.notifications) setAdminNotifications(snap.notifications);
+      });
+      fetchInitialSupabaseStore().then((snap) => {
+        if (!active || !snap) return;
+        if (snap.products) setProducts(snap.products);
+        if (snap.categories) setCategories(snap.categories);
+        if (snap.banners) setBanners(snap.banners);
+        if (snap.coupons) setCoupons(snap.coupons);
+        if (snap.orders) setOrders(snap.orders);
+        if (snap.users) setManagedUsers(snap.users);
+        if (snap.complaints) setComplaints(snap.complaints);
+        if (snap.settings) setWebsiteSettings(snap.settings);
+        if (snap.notifications) setAdminNotifications(snap.notifications);
+      });
+    };
+
+    document.addEventListener('visibilitychange', refreshStoreOnResume);
+    window.addEventListener('focus', refreshStoreOnResume);
+
     return () => {
       active = false;
+      document.removeEventListener('visibilitychange', refreshStoreOnResume);
+      window.removeEventListener('focus', refreshStoreOnResume);
       unsubscribeServer();
       unsubscribeSupabase();
     };
