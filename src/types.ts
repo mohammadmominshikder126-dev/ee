@@ -164,4 +164,5 @@ export interface WebsiteSettings {
   adminPin: string;
   mobileNotifyEnabled?: boolean;
   mobileNotifyTopic?: string;
+  metaPixelId?: string;
 }

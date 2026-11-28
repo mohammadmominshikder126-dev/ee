@@ -42,11 +42,22 @@ import {
 } from './types';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 import {
+  configureMetaPixel,
+  trackPixelAddToCart,
+  trackPixelInitiateCheckout,
+  trackPixelLead,
+  trackPixelPageView,
+  trackPixelPurchase,
+  trackPixelViewContent,
+} from './lib/metaPixel';
+import {
   bannerToRow,
   complaintToRow,
   couponToRow,
   dispatchOrderAndMobileNotification,
   fetchInitialSupabaseStore,
+  fetchPixelConfig,
+  fetchServerStore,
   notificationToRow,
   orderToRow,
   productToRow,
@@ -57,6 +68,8 @@ import {
   rowToProduct,
   rowToUser,
   subscribeRealtimeStore,
+  subscribeServerRealtime,
+  syncSingleDelete,
   syncSingleUpsert,
   syncTableReplaceAll,
   syncWebsiteSettings,
@@ -137,6 +150,8 @@ function writeStorage<T>(key: string, value: T) {
 export default function App() {
   const [adminMode, setAdminMode] = useState<boolean>(() => isAdminPathActive());
   const [supabaseConnected, setSupabaseConnected] = useState<boolean>(isSupabaseConfigured);
+  const [serverConnected, setServerConnected] = useState<boolean>(false);
+  const [envPixelId, setEnvPixelId] = useState<string>('');
 
   const [products, setProducts] = useState<Product[]>(() =>
     readStorage(STORAGE_PRODUCTS_KEY, PRODUCTS)
@@ -245,9 +260,60 @@ export default function App() {
     }
   }, [user]);
 
-  // Supabase initial hydration & live realtime sync between Admin Panel and User Panel
+  // Server Store + Supabase initial hydration & live real-time sync between Admin Panel and User Panel
   useEffect(() => {
     let active = true;
+
+    fetchPixelConfig().then((pxId) => {
+      if (active && pxId) setEnvPixelId(pxId);
+    });
+
+    fetchServerStore().then((snap) => {
+      if (!active || !snap) return;
+      if (snap.metaPixelId) setEnvPixelId(snap.metaPixelId);
+
+      if (snap.initialized) {
+        if (snap.products) setProducts(snap.products);
+        if (snap.categories && snap.categories.length > 0) setCategories(snap.categories);
+        if (snap.banners) setBanners(snap.banners);
+        if (snap.coupons) setCoupons(snap.coupons);
+        if (snap.orders) setOrders(snap.orders);
+        if (snap.users) setManagedUsers(snap.users);
+        if (snap.complaints) setComplaints(snap.complaints);
+        if (snap.visitors) setVisitors(snap.visitors);
+        if (snap.settings) setWebsiteSettings(snap.settings);
+        if (snap.notifications) setAdminNotifications(snap.notifications);
+      } else {
+        // Seed authoritative server store once on first boot if empty
+        const initialProducts = readStorage(STORAGE_PRODUCTS_KEY, PRODUCTS);
+        const initialCats = readStorage(STORAGE_CATEGORIES_KEY, DEFAULT_CATEGORIES);
+        const initialBanners = readStorage(STORAGE_BANNERS_KEY, DEFAULT_BANNERS);
+        const initialCoupons = readStorage(STORAGE_COUPONS_KEY, DEFAULT_COUPONS);
+        const initialSettings = {
+          ...DEFAULT_WEBSITE_SETTINGS,
+          ...readStorage<Partial<WebsiteSettings>>(STORAGE_SETTINGS_KEY, {}),
+        };
+        syncTableReplaceAll(
+          'products',
+          initialProducts.map((p, idx) => productToRow(p, idx))
+        );
+        syncTableReplaceAll(
+          'categories',
+          initialCats.map((name, idx) => ({ name, sort_order: idx })),
+          'name'
+        );
+        syncTableReplaceAll(
+          'banners',
+          initialBanners.map((b, idx) => bannerToRow(b, idx))
+        );
+        syncTableReplaceAll(
+          'coupons',
+          initialCoupons.map((c) => couponToRow(c))
+        );
+        syncWebsiteSettings(initialSettings);
+      }
+    });
+
     fetchInitialSupabaseStore().then((snap) => {
       if (!active || !snap) return;
       if (snap.products) setProducts(snap.products);
@@ -262,7 +328,54 @@ export default function App() {
       if (snap.notifications) setAdminNotifications(snap.notifications);
     });
 
-    const unsubscribe = subscribeRealtimeStore({
+    const unsubscribeServer = subscribeServerRealtime({
+      onStatusChange: (connected) => {
+        if (active) setServerConnected(connected);
+      },
+      onProductsSnapshot: (next) => {
+        if (active) setProducts(next);
+      },
+      onCategoriesSnapshot: (next) => {
+        if (active && next.length > 0) setCategories(next);
+      },
+      onBannersSnapshot: (next) => {
+        if (active) setBanners(next);
+      },
+      onCouponsSnapshot: (next) => {
+        if (active) setCoupons(next);
+      },
+      onOrdersSnapshot: (next) => {
+        if (active) setOrders(next);
+      },
+      onUsersSnapshot: (next) => {
+        if (active) setManagedUsers(next);
+      },
+      onComplaintsSnapshot: (next) => {
+        if (active) setComplaints(next);
+      },
+      onVisitorsSnapshot: (next) => {
+        if (active) setVisitors(next);
+      },
+      onSettingsSnapshot: (next) => {
+        if (active) setWebsiteSettings(next);
+      },
+      onNotificationsSnapshot: (next) => {
+        if (!active) return;
+        setAdminNotifications((prev) => {
+          const newest = next[0];
+          const isNewAlert = newest && !newest.read && !prev.some((p) => p.id === newest.id);
+          if (isNewAlert && isAdminPathActive()) {
+            playAdminAlertChime();
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification(newest.title, { body: newest.message });
+            }
+          }
+          return next.slice(0, 60);
+        });
+      },
+    });
+
+    const unsubscribeSupabase = subscribeRealtimeStore({
       onStatusChange: (connected) => {
         if (active) setSupabaseConnected(connected || isSupabaseConfigured);
       },
@@ -272,7 +385,7 @@ export default function App() {
           .from('products')
           .select('*')
           .order('sort_order', { ascending: true });
-        if (active && data && data.length > 0) {
+        if (active && data) {
           setProducts(data.map((r) => rowToProduct(r as Record<string, unknown>)));
         }
       },
@@ -352,9 +465,48 @@ export default function App() {
 
     return () => {
       active = false;
-      unsubscribe();
+      unsubscribeServer();
+      unsubscribeSupabase();
     };
   }, []);
+
+  // Keep Cart and open Product modal synced immediately when Admin changes product price/name/stock
+  useEffect(() => {
+    setCart((prev) => {
+      let changed = false;
+      const next = prev.map((item) => {
+        const latest = products.find((p) => p.id === item.product.id);
+        if (latest && latest !== item.product) {
+          changed = true;
+          return { ...item, product: latest };
+        }
+        return item;
+      });
+      return changed ? next : prev;
+    });
+    setDetailProduct((prev) => {
+      if (!prev) return null;
+      return products.find((p) => p.id === prev.id) || null;
+    });
+  }, [products]);
+
+  // Meta Pixel dynamic configuration + SPA route PageView + ViewContent tracking
+  const resolvedPixelId = (websiteSettings.metaPixelId || envPixelId || '').trim();
+  useEffect(() => {
+    configureMetaPixel(resolvedPixelId, !adminMode);
+  }, [resolvedPixelId, adminMode]);
+
+  useEffect(() => {
+    if (adminMode) return;
+    const routePath = activeTab === 'home' ? '/' : `/${activeTab}`;
+    trackPixelPageView(routePath);
+  }, [adminMode, activeTab, resolvedPixelId]);
+
+  useEffect(() => {
+    if (!adminMode && detailProduct) {
+      trackPixelViewContent(detailProduct);
+    }
+  }, [adminMode, detailProduct?.id]);
 
   // Track real page visit once per page load
   useEffect(() => {
@@ -494,6 +646,7 @@ export default function App() {
   const handleAddToCart = (product: Product, quantity = 1, selectedColor?: string) => {
     const chosenColor =
       selectedColor || (product.colors && product.colors.length > 0 ? product.colors[0] : 'White');
+    trackPixelAddToCart(product, quantity, chosenColor);
     setCart((prev) => {
       const existing = prev.find(
         (item) =>
@@ -529,13 +682,18 @@ export default function App() {
   const handleOrderNow = (product: Product, quantity = 1, selectedColor?: string) => {
     const chosenColor =
       selectedColor || (product.colors && product.colors.length > 0 ? product.colors[0] : 'White');
-    setCheckoutItems([{ product, quantity, selectedColor: chosenColor }]);
+    const items = [{ product, quantity, selectedColor: chosenColor }];
+    const deliveryFee = product.freeDelivery ? 0 : websiteSettings.dhakaDeliveryFee;
+    trackPixelInitiateCheckout(items, product.price * quantity + deliveryFee);
+    setCheckoutItems(items);
     setCheckoutDirect(true);
     setCheckoutOpen(true);
   };
 
   const handleCartCheckout = () => {
     if (cart.length === 0) return;
+    const subtotal = cart.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
+    trackPixelInitiateCheckout(cart, subtotal);
     setCheckoutItems(cart);
     setCheckoutDirect(false);
     setCartOpen(false);
@@ -543,6 +701,7 @@ export default function App() {
   };
 
   const handleOrderCreated = (order: OrderRecord, clearedFromCart: boolean) => {
+    trackPixelPurchase(order);
     setOrders((prev) => [order, ...prev]);
     syncSingleUpsert('orders', orderToRow(order), 'id');
     registerCustomerRecord(order.customerName, order.phone, 'অর্ডার', order.address);
@@ -712,9 +871,7 @@ export default function App() {
         }}
         onDeleteOrder={(orderId) => {
           setOrders((prev) => prev.filter((o) => o.id !== orderId));
-          if (supabase) {
-            supabase.from('orders').delete().eq('id', orderId);
-          }
+          syncSingleDelete('orders', orderId, 'id', websiteSettings.adminPin);
         }}
         coupons={coupons}
         onSaveCoupons={(next) => {
@@ -762,7 +919,10 @@ export default function App() {
           syncWebsiteSettings(resetVal, resetVal.adminPin);
         }}
         visitors={visitors}
-        onClearVisitors={() => setVisitors([])}
+        onClearVisitors={() => {
+          setVisitors([]);
+          syncTableReplaceAll('visitors', [], 'id', websiteSettings.adminPin);
+        }}
         complaints={complaints}
         onToggleComplaintStatus={(id) =>
           setComplaints((prev) =>
@@ -792,7 +952,7 @@ export default function App() {
             return updated;
           });
         }}
-        supabaseConnected={supabaseConnected}
+        supabaseConnected={supabaseConnected || serverConnected}
         onTestMobileNotification={() => {
           const testNotif: AdminNotification = {
             id: `notif-test-${Date.now()}`,
@@ -1009,6 +1169,7 @@ export default function App() {
                 onSaveProfile={(prof) => {
                   setCartProfile(prof);
                   registerCustomerRecord(prof.name, prof.phone, 'কার্ট', prof.address);
+                  trackPixelLead('Cart Customer Profile', { identifier: prof.phone });
                 }}
                 onUpdateQty={handleUpdateQty}
                 onRemoveItem={handleRemoveItem}
@@ -1029,6 +1190,9 @@ export default function App() {
                       loggedInUser.identifier,
                       'রেজিস্ট্রেশন'
                     );
+                    trackPixelLead('Mobile Login / Registration', {
+                      identifier: loggedInUser.identifier,
+                    });
                   }}
                   onLogout={() => setUser(null)}
                   onTrackOrder={(orderId) => handleOpenTrackOrder(orderId)}
@@ -1091,6 +1255,7 @@ export default function App() {
       <SupportChatWidget
         whatsappNumber={websiteSettings.whatsappNumber}
         whatsappMessage={websiteSettings.whatsappMessage}
+        onLeadClick={() => trackPixelLead('WhatsApp Chat Click')}
       />
 
       <nav
@@ -1187,6 +1352,7 @@ export default function App() {
         onSaveProfile={(prof) => {
           setCartProfile(prof);
           registerCustomerRecord(prof.name, prof.phone, 'কার্ট', prof.address);
+          trackPixelLead('Cart Drawer Profile', { identifier: prof.phone });
         }}
         onClose={() => setCartOpen(false)}
         onUpdateQty={handleUpdateQty}
@@ -1219,6 +1385,7 @@ export default function App() {
         onSubmitComplaint={(ticket) => {
           setComplaints((prev) => [ticket, ...prev]);
           syncSingleUpsert('complaints', complaintToRow(ticket), 'id');
+          trackPixelLead('Customer Complaint / Support', { identifier: ticket.phone });
         }}
       />
     </div>

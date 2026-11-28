@@ -548,7 +548,15 @@ export function AdminPanel({
 
   const handleSaveSettingsSubmit = (e: FormEvent) => {
     e.preventDefault();
-    onSaveSettings(draftSettings);
+    const rawPixel = String(draftSettings.metaPixelId || '').trim();
+    const cleanPixel = rawPixel.replace(/\D/g, '');
+    if (rawPixel && !/^\d{8,22}$/.test(cleanPixel)) {
+      showToast('সঠিক ৮–২২ সংখ্যার Meta Pixel ID লিখুন অথবা ফাঁকা রাখুন।');
+      return;
+    }
+    const nextToSave = { ...draftSettings, metaPixelId: cleanPixel };
+    setDraftSettings(nextToSave);
+    onSaveSettings(nextToSave);
     showToast('ওয়েবসাইট সেটিংস সফলভাবে সেভ হয়েছে!');
   };
 
@@ -2485,8 +2493,8 @@ export function AdminPanel({
                     }`}
                   >
                     {supabaseConnected
-                      ? 'Supabase লাইভ রিয়েল-টাইম সংযুক্ত'
-                      : 'ENV (VITE_SUPABASE_URL / ANON KEY) সেট করুন'}
+                      ? 'লাইভ রিয়েল-টাইম সংযুক্ত'
+                      : 'রিয়েল-টাইম সার্ভার / Supabase সংযোগ অপেক্ষমান'}
                   </span>
                 </div>
 
@@ -2555,6 +2563,58 @@ export function AdminPanel({
                       )}
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Meta Pixel Configuration */}
+              <div className="space-y-3 pt-4 border-t border-neutral-100">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-[#1877F2]" />
+                    <span className="text-xs font-bold">
+                      Meta Pixel (Facebook Pixel) কনফিগারেশন
+                    </span>
+                  </div>
+                  <span
+                    className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                      /^\d{8,22}$/.test(String(draftSettings.metaPixelId || '').replace(/\D/g, ''))
+                        ? 'bg-[#ecfdf3] text-[#15803d]'
+                        : 'bg-neutral-100 text-neutral-600'
+                    }`}
+                  >
+                    {/^\d{8,22}$/.test(String(draftSettings.metaPixelId || '').replace(/\D/g, ''))
+                      ? 'Pixel সক্রিয়'
+                      : 'Pixel কনফিগার করা হয়নি'}
+                  </span>
+                </div>
+
+                <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-3.5 space-y-2.5 text-xs">
+                  <div>
+                    <label className="block text-[11px] font-bold text-neutral-700 mb-1">
+                      Meta Pixel ID (শুধু সংখ্যা, যেমন: 123456789012345)
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={draftSettings.metaPixelId || ''}
+                      onChange={(e) =>
+                        setDraftSettings({
+                          ...draftSettings,
+                          metaPixelId: e.target.value.replace(/\D/g, '').slice(0, 22),
+                        })
+                      }
+                      placeholder="আপনার Meta Pixel ID লিখুন"
+                      className="w-full h-10 px-3 rounded-xl border border-neutral-300 bg-white text-sm font-mono-num outline-none focus:border-[#1877F2]"
+                    />
+                  </div>
+                  <p className="text-[11px] text-neutral-600 leading-relaxed">
+                    সেভ করলেই ইউজার প্যানেলে অটোমেটিক <span className="font-semibold">PageView (SPA Route)</span>,{' '}
+                    <span className="font-semibold">ViewContent</span>,{' '}
+                    <span className="font-semibold">AddToCart</span>,{' '}
+                    <span className="font-semibold">InitiateCheckout</span>,{' '}
+                    <span className="font-semibold">Purchase (BDT)</span> এবং{' '}
+                    <span className="font-semibold">Lead</span> ইভেন্ট ডুপ্লিকেট ছাড়াই ফায়ার হবে।
+                  </p>
                 </div>
               </div>
 

@@ -246,12 +246,39 @@ export function rowToNotification(r: Record<string, unknown>): AdminNotification
   };
 }
 
+const CLIENT_ID = `cli-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+const BROADCAST_CHANNEL_NAME = 'aponjon_store_realtime_v1';
+
+let broadcastChannel: BroadcastChannel | null = null;
+function getBroadcastChannel(): BroadcastChannel | null {
+  if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') return null;
+  if (!broadcastChannel) {
+    broadcastChannel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+  }
+  return broadcastChannel;
+}
+
+function postCrossTabMessage(payload: {
+  table: string;
+  action: 'replace_all' | 'upsert' | 'delete' | 'snapshot';
+  rows: unknown;
+  sourceClientId: string;
+}) {
+  try {
+    getBroadcastChannel()?.postMessage(payload);
+  } catch {
+    // Ignore BroadcastChannel errors
+  }
+}
+
 async function tryApiSync(
   table: string,
   action: 'replace_all' | 'upsert' | 'delete',
   rows: unknown,
   adminPin?: string
 ): Promise<boolean> {
+  postCrossTabMessage({ table, action, rows, sourceClientId: CLIENT_ID });
+
   try {
     const res = await fetch('/api/admin/sync', {
       method: 'POST',
@@ -259,7 +286,7 @@ async function tryApiSync(
         'Content-Type': 'application/json',
         ...(adminPin ? { 'x-admin-pin': adminPin } : {}),
       },
-      body: JSON.stringify({ table, action, rows }),
+      body: JSON.stringify({ table, action, rows, sourceClientId: CLIENT_ID }),
     });
     if (res.ok) {
       const data = (await res.json()) as { synced?: boolean };
@@ -402,6 +429,80 @@ export interface InitialSupabaseSnapshot {
   visitors?: VisitorEntry[];
   settings?: WebsiteSettings;
   notifications?: AdminNotification[];
+  initialized?: boolean;
+  metaPixelId?: string;
+}
+
+export async function fetchPixelConfig(): Promise<string> {
+  try {
+    const res = await fetch('/api/pixel-config', { cache: 'no-store' });
+    if (!res.ok) return '';
+    const data = (await res.json()) as { pixelId?: string };
+    return String(data.pixelId || '').replace(/\D/g, '').trim();
+  } catch {
+    return '';
+  }
+}
+
+export async function fetchServerStore(): Promise<InitialSupabaseSnapshot | null> {
+  try {
+    const res = await fetch('/api/store', { cache: 'no-store' });
+    if (!res.ok) return null;
+    const payload = (await res.json()) as {
+      initialized?: boolean;
+      metaPixelId?: string;
+      store?: Record<string, Record<string, unknown>[]>;
+    };
+    const raw = payload.store || {};
+    const snapshot: InitialSupabaseSnapshot = {
+      initialized: Boolean(payload.initialized),
+      metaPixelId: payload.metaPixelId || '',
+    };
+
+    if (Array.isArray(raw.products) && raw.products.length > 0) {
+      snapshot.products = raw.products.map(rowToProduct);
+    } else if (Array.isArray(raw.products)) {
+      snapshot.products = [];
+    }
+
+    if (Array.isArray(raw.categories) && raw.categories.length > 0) {
+      snapshot.categories = raw.categories.map((r) => String(r.name));
+    }
+    if (Array.isArray(raw.banners)) {
+      snapshot.banners = raw.banners.map(rowToBanner);
+    }
+    if (Array.isArray(raw.coupons)) {
+      snapshot.coupons = raw.coupons.map(rowToCoupon);
+    }
+    if (Array.isArray(raw.orders)) {
+      snapshot.orders = raw.orders.map(rowToOrder);
+    }
+    if (Array.isArray(raw.managed_users)) {
+      snapshot.users = raw.managed_users.map(rowToUser);
+    }
+    if (Array.isArray(raw.complaints)) {
+      snapshot.complaints = raw.complaints.map(rowToComplaint);
+    }
+    if (Array.isArray(raw.visitors)) {
+      snapshot.visitors = raw.visitors.map(rowToVisitor);
+    }
+    if (Array.isArray(raw.store_settings)) {
+      const mainRow = raw.store_settings.find((r) => String(r.id) === 'main');
+      if (mainRow?.settings && typeof mainRow.settings === 'object') {
+        snapshot.settings = {
+          ...DEFAULT_WEBSITE_SETTINGS,
+          ...(mainRow.settings as Partial<WebsiteSettings>),
+        };
+      }
+    }
+    if (Array.isArray(raw.admin_notifications)) {
+      snapshot.notifications = raw.admin_notifications.map(rowToNotification);
+    }
+
+    return snapshot;
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchInitialSupabaseStore(): Promise<InitialSupabaseSnapshot | null> {
@@ -441,7 +542,6 @@ export async function fetchInitialSupabaseStore(): Promise<InitialSupabaseSnapsh
     if (prodRes.data && prodRes.data.length > 0) {
       snapshot.products = prodRes.data.map((r) => rowToProduct(r as Record<string, unknown>));
     } else if (!prodRes.error) {
-      // Seed defaults once if Supabase table is empty
       await syncTableReplaceAll(
         'products',
         PRODUCTS.map((p, idx) => productToRow(p, idx))
@@ -506,6 +606,132 @@ export async function fetchInitialSupabaseStore(): Promise<InitialSupabaseSnapsh
   } catch {
     return null;
   }
+}
+
+export interface ServerRealtimeCallbacks {
+  onProductsSnapshot: (products: Product[]) => void;
+  onCategoriesSnapshot: (categories: string[]) => void;
+  onBannersSnapshot: (banners: BannerSlide[]) => void;
+  onCouponsSnapshot: (coupons: CouponCode[]) => void;
+  onOrdersSnapshot: (orders: OrderRecord[]) => void;
+  onUsersSnapshot: (users: ManagedUser[]) => void;
+  onComplaintsSnapshot: (complaints: ComplaintTicket[]) => void;
+  onVisitorsSnapshot: (visitors: VisitorEntry[]) => void;
+  onSettingsSnapshot: (settings: WebsiteSettings) => void;
+  onNotificationsSnapshot: (notifications: AdminNotification[]) => void;
+  onStatusChange?: (connected: boolean) => void;
+}
+
+export function subscribeServerRealtime(callbacks: ServerRealtimeCallbacks): () => void {
+  if (typeof window === 'undefined') return () => {};
+
+  const applyTableRows = (table: string, rows: Record<string, unknown>[]) => {
+    switch (table) {
+      case 'products':
+        callbacks.onProductsSnapshot(rows.map(rowToProduct));
+        break;
+      case 'categories':
+        callbacks.onCategoriesSnapshot(rows.map((r) => String(r.name)));
+        break;
+      case 'banners':
+        callbacks.onBannersSnapshot(rows.map(rowToBanner));
+        break;
+      case 'coupons':
+        callbacks.onCouponsSnapshot(rows.map(rowToCoupon));
+        break;
+      case 'orders':
+        callbacks.onOrdersSnapshot(rows.map(rowToOrder));
+        break;
+      case 'managed_users':
+        callbacks.onUsersSnapshot(rows.map(rowToUser));
+        break;
+      case 'complaints':
+        callbacks.onComplaintsSnapshot(rows.map(rowToComplaint));
+        break;
+      case 'visitors':
+        callbacks.onVisitorsSnapshot(rows.map(rowToVisitor));
+        break;
+      case 'store_settings': {
+        const mainRow = rows.find((r) => String(r.id) === 'main');
+        if (mainRow?.settings && typeof mainRow.settings === 'object') {
+          callbacks.onSettingsSnapshot({
+            ...DEFAULT_WEBSITE_SETTINGS,
+            ...(mainRow.settings as Partial<WebsiteSettings>),
+          });
+        }
+        break;
+      }
+      case 'admin_notifications':
+        callbacks.onNotificationsSnapshot(rows.map(rowToNotification));
+        break;
+    }
+  };
+
+  let eventSource: EventSource | null = null;
+  if (typeof EventSource !== 'undefined') {
+    eventSource = new EventSource('/api/store/stream');
+    eventSource.addEventListener('connected', () => {
+      callbacks.onStatusChange?.(true);
+    });
+    eventSource.onopen = () => {
+      callbacks.onStatusChange?.(true);
+    };
+    eventSource.onerror = () => {
+      callbacks.onStatusChange?.(false);
+    };
+    eventSource.addEventListener('store_update', (evt) => {
+      try {
+        const msg = JSON.parse((evt as MessageEvent).data) as {
+          table?: string;
+          action?: string;
+          rows?: Record<string, unknown>[];
+          sourceClientId?: string;
+        };
+        if (msg.sourceClientId && msg.sourceClientId === CLIENT_ID) return;
+        if (msg.table && Array.isArray(msg.rows)) {
+          applyTableRows(msg.table, msg.rows);
+        }
+      } catch {
+        // Ignore malformed SSE payload
+      }
+    });
+  }
+
+  const channel = getBroadcastChannel();
+  const handleChannelMessage = (evt: MessageEvent) => {
+    const msg = evt.data as {
+      table?: string;
+      action?: string;
+      rows?: unknown;
+      sourceClientId?: string;
+    };
+    if (!msg || msg.sourceClientId === CLIENT_ID) return;
+    if (msg.action === 'replace_all' && msg.table && Array.isArray(msg.rows)) {
+      applyTableRows(msg.table, msg.rows as Record<string, unknown>[]);
+    } else if (msg.table) {
+      fetchServerStore().then((snap) => {
+        if (!snap) return;
+        if (msg.table === 'products' && snap.products) callbacks.onProductsSnapshot(snap.products);
+        if (msg.table === 'categories' && snap.categories) callbacks.onCategoriesSnapshot(snap.categories);
+        if (msg.table === 'banners' && snap.banners) callbacks.onBannersSnapshot(snap.banners);
+        if (msg.table === 'coupons' && snap.coupons) callbacks.onCouponsSnapshot(snap.coupons);
+        if (msg.table === 'orders' && snap.orders) callbacks.onOrdersSnapshot(snap.orders);
+        if (msg.table === 'managed_users' && snap.users) callbacks.onUsersSnapshot(snap.users);
+        if (msg.table === 'complaints' && snap.complaints) callbacks.onComplaintsSnapshot(snap.complaints);
+        if (msg.table === 'visitors' && snap.visitors) callbacks.onVisitorsSnapshot(snap.visitors);
+        if (msg.table === 'store_settings' && snap.settings) callbacks.onSettingsSnapshot(snap.settings);
+        if (msg.table === 'admin_notifications' && snap.notifications) {
+          callbacks.onNotificationsSnapshot(snap.notifications);
+        }
+      });
+    }
+  };
+  channel?.addEventListener('message', handleChannelMessage);
+
+  return () => {
+    eventSource?.close();
+    channel?.removeEventListener('message', handleChannelMessage);
+  };
 }
 
 export interface RealtimeCallbacks {

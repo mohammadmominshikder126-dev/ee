@@ -1,6 +1,7 @@
 interface SupportChatWidgetProps {
   whatsappNumber?: string;
   whatsappMessage?: string;
+  onLeadClick?: () => void;
 }
 
 const DEFAULT_WHATSAPP_NUMBER = '8801619502669';
@@ -10,6 +11,7 @@ const DEFAULT_WHATSAPP_MESSAGE =
 export function SupportChatWidget({
   whatsappNumber = DEFAULT_WHATSAPP_NUMBER,
   whatsappMessage = DEFAULT_WHATSAPP_MESSAGE,
+  onLeadClick,
 }: SupportChatWidgetProps) {
   const cleanNumber = whatsappNumber.replace(/\D/g, '') || DEFAULT_WHATSAPP_NUMBER;
   const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(whatsappMessage)}`;
@@ -19,6 +21,7 @@ export function SupportChatWidget({
       href={whatsappUrl}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={() => onLeadClick?.()}
       aria-label="আপনজন ই-শপ হোয়াটসঅ্যাপে যোগাযোগ করুন"
       title="হোয়াটসঅ্যাপে মেসেজ করুন"
       className="fixed right-3 sm:right-6 bottom-[82px] md:bottom-6 z-40 w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#1ebe5d] text-white shadow-[0_6px_22px_rgba(37,211,102,0.42)] flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
